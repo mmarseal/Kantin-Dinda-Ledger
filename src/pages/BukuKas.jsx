@@ -1,27 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { formatRupiah } from '../utils/formatCurrency'
 import { TrendingUp, TrendingDown, Trash2, AlertCircle } from 'lucide-react'
+import { useTransactions } from '../hooks/useTransactions'
 
 const FILTER = [
   { label: 'Hari Ini', value: 'today' },
   { label: 'Minggu Ini', value: 'week' },
   { label: 'Bulan Ini', value: 'month' },
 ]
-
-function getDateRange(filter) {
-  const now = new Date()
-  const today = now.toISOString().split('T')[0]
-  if (filter === 'today') return { start: today, end: today }
-  if (filter === 'week') {
-    const start = new Date(now)
-    start.setDate(now.getDate() - 6)
-    return { start: start.toISOString().split('T')[0], end: today }
-  }
-  // month
-  const start = new Date(now.getFullYear(), now.getMonth(), 1)
-  return { start: start.toISOString().split('T')[0], end: today }
-}
 
 function groupByDate(transactions) {
   return transactions.reduce((groups, tx) => {
@@ -40,37 +27,15 @@ function formatTanggalGrup(dateStr) {
 
 export default function BukuKas() {
   const [filter, setFilter] = useState('today')
-  const [transactions, setTransactions] = useState([])
-  const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState(null)
-
-  async function fetchTransactions() {
-    setLoading(true)
-    const { start, end } = getDateRange(filter)
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .gte('transaction_date', start)
-      .lte('transaction_date', end)
-      .order('transaction_date', { ascending: false })
-      .order('created_at', { ascending: false })
-
-    if (!error) setTransactions(data)
-    setLoading(false)
-  }
-
-  useEffect(() => { fetchTransactions() }, [filter])
+  const { transactions, loading, summary, refetch } = useTransactions(filter)
 
   async function handleDelete(id) {
-    const { error } = await supabase.from('transactions').delete().eq('id', id)
-    if (!error) {
-      setTransactions(prev => prev.filter(t => t.id !== id))
-      setDeleteId(null)
-    }
+    await supabase.from('transactions').delete().eq('id', id)
+    refetch()
+    setDeleteId(null)
   }
 
-  const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
-  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
   const grouped = groupByDate(transactions)
   const sortedDates = Object.keys(grouped).sort((a, b) => b.localeCompare(a))
 
@@ -106,16 +71,16 @@ export default function BukuKas() {
           <div className="grid grid-cols-3 gap-2 text-center">
             <div>
               <p className="text-xs text-gray-500 mb-1">Pemasukan</p>
-              <p className="text-green-600 font-bold text-sm">{formatRupiah(totalIncome)}</p>
+              <p className="text-green-600 font-bold text-sm">{formatRupiah(summary.totalIncome)}</p>
             </div>
             <div className="border-x border-gray-100">
               <p className="text-xs text-gray-500 mb-1">Pengeluaran</p>
-              <p className="text-red-500 font-bold text-sm">{formatRupiah(totalExpense)}</p>
+              <p className="text-red-500 font-bold text-sm">{formatRupiah(summary.totalExpense)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-1">Laba Bersih</p>
-              <p className={`font-bold text-sm ${totalIncome - totalExpense >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {formatRupiah(totalIncome - totalExpense)}
+              <p className={`font-bold text-sm ${summary.laba >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                {formatRupiah(summary.laba)}
               </p>
             </div>
           </div>
@@ -140,61 +105,36 @@ export default function BukuKas() {
         ) : (
           sortedDates.map(date => (
             <div key={date}>
-              {/* Label Tanggal */}
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide px-1 mb-2">
                 {formatTanggalGrup(date)}
               </p>
-
               <div className="flex flex-col gap-2">
                 {grouped[date].map(tx => (
                   <div key={tx.id} className="bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100 flex items-center gap-3">
-
-                    {/* Ikon */}
                     <div className={`p-2.5 rounded-xl shrink-0 ${tx.type === 'income' ? 'bg-green-100' : 'bg-red-100'}`}>
                       {tx.type === 'income'
                         ? <TrendingUp size={18} className="text-green-600" />
                         : <TrendingDown size={18} className="text-red-500" />
                       }
                     </div>
-
-                    {/* Info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-800 truncate">
                         {tx.note || (tx.type === 'income' ? 'Pemasukan' : tx.category)}
                       </p>
-                      {tx.category && (
-                        <span className="text-xs text-gray-400">{tx.category}</span>
-                      )}
+                      {tx.category && <span className="text-xs text-gray-400">{tx.category}</span>}
                     </div>
-
-                    {/* Nominal */}
                     <div className="text-right shrink-0">
                       <p className={`font-bold text-sm ${tx.type === 'income' ? 'text-green-600' : 'text-red-500'}`}>
                         {tx.type === 'income' ? '+' : '-'}{formatRupiah(tx.amount)}
                       </p>
                     </div>
-
-                    {/* Tombol Hapus */}
                     {deleteId === tx.id ? (
                       <div className="flex gap-1 shrink-0">
-                        <button
-                          onClick={() => handleDelete(tx.id)}
-                          className="bg-red-500 text-white text-xs px-2 py-1 rounded-lg font-medium"
-                        >
-                          Hapus
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(null)}
-                          className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-lg font-medium"
-                        >
-                          Batal
-                        </button>
+                        <button onClick={() => handleDelete(tx.id)} className="bg-red-500 text-white text-xs px-2 py-1 rounded-lg font-medium">Hapus</button>
+                        <button onClick={() => setDeleteId(null)} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-lg font-medium">Batal</button>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setDeleteId(tx.id)}
-                        className="p-1.5 text-gray-300 hover:text-red-400 transition-colors shrink-0"
-                      >
+                      <button onClick={() => setDeleteId(tx.id)} className="p-1.5 text-gray-300 hover:text-red-400 transition-colors shrink-0">
                         <Trash2 size={16} />
                       </button>
                     )}
@@ -205,8 +145,6 @@ export default function BukuKas() {
           ))
         )}
       </div>
-
-      {/* Confirm Delete Modal - backdrop */}
     </div>
   )
 }
