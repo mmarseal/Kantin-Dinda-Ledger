@@ -144,7 +144,7 @@ export default function ExportLaporan() {
   return (
     <div className="flex flex-col min-h-full">
       {/* Header */}
-      <div className="bg-green-600 px-4 pt-10 pb-6">
+      <div className="bg-green-600 px-4 pt-10 pb-6 md:hidden">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-green-100 mb-3">
           <ArrowLeft size={18} /> Kembali
         </button>

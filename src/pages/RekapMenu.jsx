@@ -89,7 +89,7 @@ export default function RekapMenu() {
   return (
     <div className="flex flex-col min-h-full">
       {/* Header */}
-      <div className="bg-green-600 px-4 pt-10 pb-6 flex justify-between items-start">
+      <div className="bg-green-600 px-4 pt-10 pb-6 flex justify-between items-start md:hidden">
         <div>
           <h1 className="text-white text-2xl font-bold">Rekap Menu</h1>
           <p className="text-green-100 text-sm mt-1">Catat menu terjual hari ini</p>

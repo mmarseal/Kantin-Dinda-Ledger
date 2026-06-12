@@ -57,7 +57,7 @@ export default function InputTransaksi() {
   return (
     <div className="flex flex-col min-h-full">
       {/* Header */}
-      <div className="bg-green-600 px-4 pt-10 pb-6">
+      <div className="bg-green-600 px-4 pt-10 pb-6 md:hidden">
         <h1 className="text-white text-2xl font-bold">Catat Transaksi</h1>
         <p className="text-green-100 text-sm mt-1">Pilih jenis dan isi nominal</p>
       </div>
