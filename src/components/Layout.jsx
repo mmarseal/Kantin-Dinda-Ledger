@@ -1,4 +1,5 @@
-import { Outlet, NavLink } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import { LayoutDashboard, PlusCircle, BookOpen, ChefHat } from 'lucide-react'
 import BottomNav from './BottomNav'
 import InstallPrompt from './InstallPrompt'
@@ -61,6 +62,16 @@ function Sidebar() {
 }
 
 export default function Layout() {
+  const { user, signOut } = useAuth()
+  const navigate = useNavigate()
+
+  const namaUser = user?.user_metadata?.nama || user?.email || 'Pengguna'
+
+  async function handleLogout() {
+    await signOut()
+    navigate('/login')
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <InstallPrompt />
@@ -74,9 +85,17 @@ export default function Layout() {
               weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
             })}
           </p>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400"></div>
-            <p className="text-sm text-gray-500">Bu Injainah</p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-400"></div>
+              <p className="text-sm text-gray-500">{namaUser}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+            >
+              Keluar
+            </button>
           </div>
         </div>
 
