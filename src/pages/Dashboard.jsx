@@ -8,6 +8,7 @@ import {
   Wallet,
   RefreshCw,
   FileDown,
+  QrCode,
 } from "lucide-react";
 import {
   BarChart,
@@ -23,7 +24,7 @@ const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [todayData, setTodayData] = useState({ income: 0, expense: 0 });
+  const [todayData, setTodayData] = useState({ income: 0, expense: 0, cash: 0, qris: 0 });
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,7 +47,7 @@ export default function Dashboard() {
 
     const { data, error } = await supabase
       .from("transactions")
-      .select("type, amount, transaction_date")
+      .select("type, amount, transaction_date, payment_method")
       .gte("transaction_date", startDate)
       .lte("transaction_date", todayISO);
 
@@ -63,7 +64,13 @@ export default function Dashboard() {
     const expense = todayTx
       .filter((t) => t.type === "expense")
       .reduce((s, t) => s + Number(t.amount), 0);
-    setTodayData({ income, expense });
+    const cash = todayTx
+      .filter((t) => t.type === "income" && t.payment_method === "cash")
+      .reduce((s, t) => s + Number(t.amount), 0);
+    const qris = todayTx
+      .filter((t) => t.type === "income" && t.payment_method === "qris")
+      .reduce((s, t) => s + Number(t.amount), 0);
+    setTodayData({ income, expense, cash, qris });
 
     const weekly = days.map((date) => {
       const dayTx = data.filter((t) => t.transaction_date === date);
@@ -122,20 +129,39 @@ export default function Dashboard() {
       <div className="px-4 -mt-4 md:mt-0 flex flex-col gap-4 pb-6">
         {/* 3 Kartu Metrik */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-green-100 p-3 rounded-xl">
-              <TrendingUp className="text-green-600" size={24} />
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-4">
+              <div className="bg-green-100 p-3 rounded-xl">
+                <TrendingUp className="text-green-600" size={24} />
+              </div>
+              <div className="flex-1">
+                <p className="text-gray-500 text-sm">Pemasukan Hari Ini</p>
+                {loading ? (
+                  <div className="h-7 w-32 bg-gray-100 rounded animate-pulse mt-1" />
+                ) : (
+                  <p className="text-green-600 text-xl font-bold">
+                    {formatRupiah(todayData.income)}
+                  </p>
+                )}
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-gray-500 text-sm">Pemasukan Hari Ini</p>
-              {loading ? (
-                <div className="h-7 w-32 bg-gray-100 rounded animate-pulse mt-1" />
-              ) : (
-                <p className="text-green-600 text-xl font-bold">
-                  {formatRupiah(todayData.income)}
-                </p>
-              )}
-            </div>
+            {!loading && (todayData.cash > 0 || todayData.qris > 0) && (
+              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center gap-1.5">
+                  <Wallet size={13} className="text-gray-400" />
+                  <span className="text-xs text-gray-500">
+                    Cash: <span className="font-semibold text-gray-700">{formatRupiah(todayData.cash)}</span>
+                  </span>
+                </div>
+                <span className="text-xs text-gray-300">·</span>
+                <div className="flex items-center gap-1.5">
+                  <QrCode size={13} className="text-gray-400" />
+                  <span className="text-xs text-gray-500">
+                    QRIS: <span className="font-semibold text-gray-700">{formatRupiah(todayData.qris)}</span>
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4">

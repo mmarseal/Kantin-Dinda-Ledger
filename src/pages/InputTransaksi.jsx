@@ -1,11 +1,13 @@
 import { useState } from "react";
+import { supabase, getUserId } from "../lib/supabase";
 import {
   TrendingUp,
   TrendingDown,
   CheckCircle,
   AlertCircle,
+  Wallet,
+  QrCode,
 } from "lucide-react";
-import { supabase, getUserId } from "../lib/supabase";
 
 const KATEGORI = ["Bahan Baku", "Operasional", "Tagihan", "Lain-lain"];
 
@@ -13,6 +15,7 @@ const defaultForm = {
   type: "",
   amount: "",
   category: "",
+  payment_method: "",
   note: "",
   transaction_date: new Date().toISOString().split("T")[0],
 };
@@ -27,7 +30,7 @@ export default function InputTransaksi() {
   }
 
   function pilihTipe(type) {
-    setForm((prev) => ({ ...prev, type, category: "" }));
+    setForm((prev) => ({ ...prev, type, category: "", payment_method: "" }));
     setStatus(null);
   }
 
@@ -39,6 +42,11 @@ export default function InputTransaksi() {
       return setStatus({ type: "error", msg: "Nominal harus lebih dari 0." });
     if (form.type === "expense" && !form.category)
       return setStatus({ type: "error", msg: "Pilih kategori pengeluaran." });
+    if (form.type === "income" && !form.payment_method)
+      return setStatus({
+        type: "error",
+        msg: "Pilih sumber pemasukan (Cash/QRIS).",
+      });
 
     setLoading(true);
     setStatus(null);
@@ -50,6 +58,7 @@ export default function InputTransaksi() {
       type: form.type,
       amount: Number(form.amount),
       category: form.type === "expense" ? form.category : null,
+      payment_method: form.type === "income" ? form.payment_method : null,
       note: form.note || null,
       transaction_date: form.transaction_date,
     };
@@ -156,6 +165,74 @@ export default function InputTransaksi() {
                   {kat}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Sumber Pemasukan*/}
+        {form.type === "income" && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <p className="text-sm font-medium text-gray-700 mb-3">
+              Sumber Pemasukan
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() =>
+                  setForm((prev) => ({ ...prev, payment_method: "cash" }))
+                }
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  form.payment_method === "cash"
+                    ? "border-green-500 bg-green-50"
+                    : "border-gray-200 bg-gray-50"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-full ${form.payment_method === "cash" ? "bg-green-100" : "bg-gray-200"}`}
+                >
+                  <Wallet
+                    size={22}
+                    className={
+                      form.payment_method === "cash"
+                        ? "text-green-600"
+                        : "text-gray-400"
+                    }
+                  />
+                </div>
+                <span
+                  className={`font-semibold text-sm ${form.payment_method === "cash" ? "text-green-600" : "text-gray-500"}`}
+                >
+                  Cash
+                </span>
+              </button>
+
+              <button
+                onClick={() =>
+                  setForm((prev) => ({ ...prev, payment_method: "qris" }))
+                }
+                className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+                  form.payment_method === "qris"
+                    ? "border-blue-400 bg-blue-50"
+                    : "border-gray-200 bg-gray-50"
+                }`}
+              >
+                <div
+                  className={`p-2 rounded-full ${form.payment_method === "qris" ? "bg-blue-100" : "bg-gray-200"}`}
+                >
+                  <QrCode
+                    size={22}
+                    className={
+                      form.payment_method === "qris"
+                        ? "text-blue-600"
+                        : "text-gray-400"
+                    }
+                  />
+                </div>
+                <span
+                  className={`font-semibold text-sm ${form.payment_method === "qris" ? "text-blue-600" : "text-gray-500"}`}
+                >
+                  QRIS
+                </span>
+              </button>
             </div>
           </div>
         )}
