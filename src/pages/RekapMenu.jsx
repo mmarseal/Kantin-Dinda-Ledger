@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase, getUserId } from "../lib/supabase";
 import {
   Settings,
   Plus,
@@ -75,6 +75,8 @@ export default function RekapMenu() {
     setSaving(true);
     setStatus(null);
     const today = new Date().toISOString().split("T")[0];
+
+    const userId = await getUserId();
 
     const inserts = entries.map(([menu_name, quantity]) => ({
       user_id: userId,
