@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
+import { supabase, getUserId } from "../lib/supabase";
 import {
   ArrowLeft,
   Plus,
@@ -41,9 +41,11 @@ export default function KelolaMenu() {
     if (duplikat) return setError("Menu sudah ada di daftar.");
 
     setSaving(true);
-    const { error } = await supabase
-      .from("menus")
-      .insert({ user_id: userId, name: newName.trim() });
+    const userId = await getUserId();
+    const { error } = await supabase.from("menus").insert({
+      user_id: userId,
+      name: newName.trim(),
+    });
     if (!error) {
       setNewName("");
       fetchMenus();
