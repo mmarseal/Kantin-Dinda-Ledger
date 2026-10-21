@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { supabase, getUserId } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import {
   TrendingUp,
   TrendingDown,
@@ -21,6 +22,7 @@ const defaultForm = {
 };
 
 export default function InputTransaksi() {
+  const { business } = useAuth();
   const [form, setForm] = useState(defaultForm);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // 'success' | 'error'
@@ -47,14 +49,17 @@ export default function InputTransaksi() {
         type: "error",
         msg: "Pilih sumber pemasukan (Cash/QRIS).",
       });
+    if (!business?.id)
+      return setStatus({
+        type: "error",
+        msg: "Data bisnis tidak ditemukan. Harap refresh atau login ulang.",
+      });
 
     setLoading(true);
     setStatus(null);
 
-    const userId = await getUserId();
-
     const payload = {
-      user_id: userId,
+      business_id: business.id,
       type: form.type,
       amount: Number(form.amount),
       category: form.type === "expense" ? form.category : null,

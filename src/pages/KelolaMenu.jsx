@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, getUserId } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import {
   ArrowLeft,
   Plus,
@@ -12,6 +13,7 @@ import {
 
 export default function KelolaMenu() {
   const navigate = useNavigate();
+  const { business } = useAuth();
   const [menus, setMenus] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
@@ -39,11 +41,12 @@ export default function KelolaMenu() {
       (m) => m.name.toLowerCase() === newName.trim().toLowerCase(),
     );
     if (duplikat) return setError("Menu sudah ada di daftar.");
+    if (!business?.id)
+      return setError("Data bisnis tidak ditemukan. Harap login ulang.");
 
     setSaving(true);
-    const userId = await getUserId();
     const { error } = await supabase.from("menus").insert({
-      user_id: userId,
+      business_id: business.id,
       name: newName.trim(),
     });
     if (!error) {

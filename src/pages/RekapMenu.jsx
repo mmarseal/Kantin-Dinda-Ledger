@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase, getUserId } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import {
   Settings,
   Plus,
@@ -25,6 +26,7 @@ function getDateRange(filter) {
 
 export default function RekapMenu() {
   const navigate = useNavigate();
+  const { business } = useAuth();
   const [filter, setFilter] = useState("today");
   const [menus, setMenus] = useState([]); // master menu
   const [sales, setSales] = useState([]); // rekap penjualan
@@ -68,18 +70,21 @@ export default function RekapMenu() {
   }
 
   async function handleSimpan() {
-    const entries = Object.entries(qty).filter(([_, q]) => q > 0);
+    const entries = Object.entries(qty).filter(([, q]) => q > 0);
     if (entries.length === 0)
       return setStatus({ type: "error", msg: "Belum ada menu yang dipilih." });
+    if (!business?.id)
+      return setStatus({
+        type: "error",
+        msg: "Data bisnis tidak ditemukan. Harap login ulang.",
+      });
 
     setSaving(true);
     setStatus(null);
     const today = new Date().toISOString().split("T")[0];
 
-    const userId = await getUserId();
-
     const inserts = entries.map(([menu_name, quantity]) => ({
-      user_id: userId,
+      business_id: business.id,
       menu_name,
       quantity,
       sale_date: today,

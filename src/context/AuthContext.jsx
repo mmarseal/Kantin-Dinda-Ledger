@@ -5,19 +5,44 @@ const AuthContext = createContext({})
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  const [business, setBusiness] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Fetch business milik user yang sedang login
+  async function fetchBusiness(userId) {
+    if (!userId) {
+      setBusiness(null)
+      return
+    }
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('id, name')
+      .eq('owner_user_id', userId)
+      .single()
+
+    if (error) {
+      console.error('Gagal memuat data bisnis:', error.message)
+      setBusiness(null)
+    } else {
+      setBusiness(data)
+    }
+  }
 
   useEffect(() => {
     // Cek session yang sudah ada
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const currentUser = session?.user ?? null
+      setUser(currentUser)
+      await fetchBusiness(currentUser?.id)
       setLoading(false)
     })
 
     // Listen perubahan auth state
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null)
+      async (_event, session) => {
+        const currentUser = session?.user ?? null
+        setUser(currentUser)
+        await fetchBusiness(currentUser?.id)
         setLoading(false)
       }
     )
@@ -41,10 +66,11 @@ export function AuthProvider({ children }) {
 
   async function signOut() {
     await supabase.auth.signOut()
+    setBusiness(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, business, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   )
