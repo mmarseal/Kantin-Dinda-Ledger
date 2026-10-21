@@ -14,36 +14,66 @@ export function AuthProvider({ children }) {
       setBusiness(null)
       return
     }
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('id, name')
-      .eq('owner_user_id', userId)
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('businesses')
+        .select('id, name')
+        .eq('owner_user_id', userId)
+        .single()
 
-    if (error) {
-      console.error('Gagal memuat data bisnis:', error.message)
+      if (error) {
+        console.error('Gagal memuat data bisnis:', error.message)
+        setBusiness(null)
+      } else {
+        setBusiness(data)
+      }
+    } catch (err) {
+      console.error('Gagal memuat data bisnis:', err)
       setBusiness(null)
-    } else {
-      setBusiness(data)
     }
   }
 
   useEffect(() => {
-    // Cek session yang sudah ada
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-      await fetchBusiness(currentUser?.id)
-      setLoading(false)
-    })
+    let initialLoad = true
 
-    // Listen perubahan auth state
+    // Cek session yang sudah ada
+    supabase.auth.getSession()
+      .then(async (res) => {
+        const currentUser = res?.data?.session?.user ?? null
+        setUser(currentUser)
+        try {
+          await fetchBusiness(currentUser?.id)
+        } finally {
+          setLoading(false)
+          initialLoad = false
+        }
+      })
+      .catch((err) => {
+        console.error('Gagal mengambil sesi:', err)
+        setLoading(false)
+        initialLoad = false
+      })
+
+    // Listen perubahan auth state.
+    // PENTING: callback TIDAK BOLEH await Supabase network call secara langsung,
+    // karena menyebabkan deadlock pada internal auth lock SDK Supabase.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      (_event, session) => {
         const currentUser = session?.user ?? null
         setUser(currentUser)
-        await fetchBusiness(currentUser?.id)
-        setLoading(false)
+
+        // Initial session sudah ditangani oleh getSession() di atas
+        if (initialLoad) return
+
+        // Defer business fetch agar callback kembali secara sinkron
+        // dan melepas Supabase internal auth lock terlebih dahulu
+        setTimeout(async () => {
+          try {
+            await fetchBusiness(currentUser?.id)
+          } finally {
+            setLoading(false)
+          }
+        }, 0)
       }
     )
 
