@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { AlertCircle, CheckCircle, Save, Store, UserRound } from 'lucide-react'
 import { useAuth } from '../context/useAuth'
 
@@ -6,11 +6,12 @@ const card = 'rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-
 
 export default function Settings() {
   const { user, business, updateBusinessName } = useAuth()
-  const [name, setName] = useState(business?.name || '')
+  const [nameDraft, setNameDraft] = useState({ businessId: business?.id ?? null, value: business?.name || '', dirty: false })
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState(null)
-
-  useEffect(() => setName(business?.name || ''), [business?.name])
+  const name = nameDraft.businessId === business?.id && nameDraft.dirty
+    ? nameDraft.value
+    : business?.name || ''
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -23,6 +24,7 @@ export default function Settings() {
     setFeedback(null)
     try {
       const { error } = await updateBusinessName(trimmedName)
+      if (!error) setNameDraft({ businessId: business.id, value: trimmedName, dirty: false })
       setFeedback(error
         ? { type: 'error', message: 'Nama usaha gagal disimpan. Silakan coba lagi.' }
         : { type: 'success', message: 'Nama usaha berhasil diperbarui.' })
@@ -46,7 +48,7 @@ export default function Settings() {
       </div>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label htmlFor="business-name" className="text-sm font-medium text-[var(--kf-text-muted)]">Nama Usaha</label>
-        <input id="business-name" value={name} onChange={event => setName(event.target.value)} maxLength={120} disabled={!business?.id || saving} className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-4 text-base text-[var(--kf-text)] outline-none focus:border-[var(--kf-accent)] focus:ring-2 focus:ring-[var(--kf-accent-soft)] disabled:bg-[var(--kf-surface-soft)]" />
+        <input id="business-name" value={name} onChange={event => setNameDraft({ businessId: business?.id ?? null, value: event.target.value, dirty: true })} maxLength={120} disabled={!business?.id || saving} className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-4 text-base text-[var(--kf-text)] outline-none focus:border-[var(--kf-accent)] focus:ring-2 focus:ring-[var(--kf-accent-soft)] disabled:bg-[var(--kf-surface-soft)]" />
         <div className="flex justify-end"><button type="submit" disabled={saving || !business?.id || !name.trim() || name.trim() === business?.name} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--kf-radius-sm)] bg-[var(--kf-accent)] px-5 text-sm font-semibold text-white transition hover:bg-[var(--kf-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"><Save size={17} aria-hidden="true" />{saving ? 'Menyimpan…' : 'Simpan'}</button></div>
       </form>
       {!business?.id && <p className="mt-3 text-sm text-[var(--kf-text-muted)]">Data usaha belum tersedia.</p>}
