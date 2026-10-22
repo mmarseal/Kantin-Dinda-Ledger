@@ -2,6 +2,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import { formatRupiah } from "../utils/formatCurrency";
+import { parseLocalDate } from "../utils/dateUtils";
 import { useTransactions } from "../hooks/useTransactions";
 import {
   TrendingUp,
@@ -28,7 +29,7 @@ function groupByDate(transactions) {
 }
 
 function formatTanggalGrup(dateStr) {
-  return new Date(dateStr + "T00:00:00").toLocaleDateString("id-ID", {
+  return parseLocalDate(dateStr).toLocaleDateString("id-ID", {
     weekday: "long",
     day: "numeric",
     month: "long",

@@ -1,6 +1,23 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/useAuth'
+import { formatLocalDate, getLocalDateDaysAgo, getStartOfMonth } from '../utils/dateUtils'
+
+function getDateRange(range) {
+  const today = formatLocalDate()
+
+  if (range === 'today') return { start: today, end: today }
+
+  if (range === '7days' || range === 'week') {
+    return { start: getLocalDateDaysAgo(6), end: today }
+  }
+
+  if (range === 'month') {
+    return { start: getStartOfMonth(), end: today }
+  }
+
+  return { start: today, end: today }
+}
 
 /**
  * Hook untuk fetch dan manage data transaksi
@@ -11,32 +28,6 @@ export function useTransactions(range = 'today') {
   const businessId = business?.id ?? null
   const [refreshToken, setRefreshToken] = useState(0)
   const [result, setResult] = useState({ key: null, transactions: [], error: null })
-
-  function getDateRange(range) {
-    const today = new Date().toISOString().split('T')[0]
-
-    if (range === 'today') return { start: today, end: today }
-
-    if (range === '7days') {
-      const start = new Date()
-      start.setDate(start.getDate() - 6)
-      return { start: start.toISOString().split('T')[0], end: today }
-    }
-
-    if (range === 'week') {
-      const start = new Date()
-      start.setDate(start.getDate() - 6)
-      return { start: start.toISOString().split('T')[0], end: today }
-    }
-
-    if (range === 'month') {
-      const now = new Date()
-      const start = new Date(now.getFullYear(), now.getMonth(), 1)
-      return { start: start.toISOString().split('T')[0], end: today }
-    }
-
-    return { start: today, end: today }
-  }
 
   const key = JSON.stringify([businessId, range, refreshToken])
 
@@ -79,7 +70,7 @@ export function useTransactions(range = 'today') {
   const error = currentResult?.error ?? null
 
   const summary = {
-    totalIncome:  transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
+    totalIncome: transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
     totalExpense: transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0),
     get laba() { return this.totalIncome - this.totalExpense }
   }

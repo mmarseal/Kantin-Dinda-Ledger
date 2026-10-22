@@ -10,6 +10,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
+import { formatLocalDate, getLocalDateDaysAgo } from "../utils/dateUtils";
 
 const FILTER = [
   { label: "Hari Ini", value: "today" },
@@ -17,11 +18,9 @@ const FILTER = [
 ];
 
 function getDateRange(filter) {
-  const today = new Date().toISOString().split("T")[0];
+  const today = formatLocalDate();
   if (filter === "today") return { start: today, end: today };
-  const start = new Date();
-  start.setDate(start.getDate() - 6);
-  return { start: start.toISOString().split("T")[0], end: today };
+  return { start: getLocalDateDaysAgo(6), end: today };
 }
 
 export default function RekapMenu() {
@@ -103,7 +102,7 @@ export default function RekapMenu() {
 
     setSaving(true);
     setStatus(null);
-    const today = new Date().toISOString().split("T")[0];
+    const today = formatLocalDate();
 
     const inserts = entries.map(([menu_name, quantity]) => ({
       business_id: business.id,

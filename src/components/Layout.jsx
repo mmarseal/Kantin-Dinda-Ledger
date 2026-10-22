@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { LayoutDashboard, PlusCircle, BookOpen, ChefHat } from "lucide-react";
+import { LayoutDashboard, PlusCircle, BookOpen, ChefHat, UtensilsCrossed } from "lucide-react";
 import BottomNav from "./BottomNav";
 import InstallPrompt from "./InstallPrompt";
 
@@ -9,9 +9,10 @@ const navItems = [
   { to: "/catat", icon: PlusCircle, label: "Catat" },
   { to: "/riwayat", icon: BookOpen, label: "Riwayat" },
   { to: "/rekap", icon: ChefHat, label: "Rekap" },
+  { to: "/kelola-menu", icon: UtensilsCrossed, label: "Kelola Menu" },
 ];
 
-function Sidebar() {
+function Sidebar({ businessName }) {
   return (
     <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 fixed left-0 top-0 z-40">
       <div className="px-6 py-6 border-b border-gray-100">
@@ -19,15 +20,15 @@ function Sidebar() {
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
             <img
               src="/icon-192.png"
-              alt="Kantin Dinda"
+              alt={businessName}
               className="w-full h-full object-cover"
             />
           </div>
           <div>
             <p className="font-bold text-gray-800 leading-tight">
-              Kantin Dinda
+              {businessName}
             </p>
-            <p className="text-xs text-gray-400">Gedung Ventura</p>
+            <p className="text-xs text-gray-400">Sistem Keuangan</p>
           </div>
         </div>
       </div>
@@ -80,9 +81,10 @@ function MobileHeader({ namaUser, onLogout }) {
 }
 
 export default function Layout() {
-  const { user, signOut } = useAuth();
+  const { user, business, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const businessName = business?.name || "KasFlow";
   const namaUser = user?.user_metadata?.nama || user?.email || "Pengguna";
 
   async function handleLogout() {
@@ -93,7 +95,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-gray-50">
       <InstallPrompt />
-      <Sidebar />
+      <Sidebar businessName={businessName} />
 
       <div className="md:ml-64">
         {/* Desktop top bar */}

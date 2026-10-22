@@ -9,21 +9,22 @@ import {
   Wallet,
   QrCode,
 } from "lucide-react";
+import { formatLocalDate } from "../utils/dateUtils";
 
 const KATEGORI = ["Bahan Baku", "Operasional", "Tagihan", "Lain-lain"];
 
-const defaultForm = {
+const getDefaultForm = () => ({
   type: "",
   amount: "",
   category: "",
   payment_method: "",
   note: "",
-  transaction_date: new Date().toISOString().split("T")[0],
-};
+  transaction_date: formatLocalDate(),
+});
 
 export default function InputTransaksi() {
   const { business } = useAuth();
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState(getDefaultForm);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // 'success' | 'error'
 
@@ -74,7 +75,7 @@ export default function InputTransaksi() {
       setStatus({ type: "error", msg: "Gagal menyimpan. Coba lagi." });
     } else {
       setStatus({ type: "success", msg: "Transaksi berhasil disimpan! ✓" });
-      setForm(defaultForm);
+      setForm(getDefaultForm());
     }
     setLoading(false);
   }

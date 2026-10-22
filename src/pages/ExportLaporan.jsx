@@ -16,6 +16,7 @@ const BULAN = [
 export default function ExportLaporan() {
   const navigate = useNavigate()
   const { business } = useAuth()
+  const businessName = business?.name || 'KasFlow'
   const now = new Date()
   const [bulan, setBulan] = useState(now.getMonth())
   const [tahun, setTahun] = useState(now.getFullYear())
@@ -81,10 +82,11 @@ export default function ExportLaporan() {
     rows.push({ 'Tanggal': 'LABA BERSIH',       'Nominal (Rp)': laba })
 
     const ws = XLSX.utils.json_to_sheet(rows)
+    const sanitizedName = businessName.replace(/[^a-zA-Z0-9_-]/g, '_')
     ws['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 28 }, { wch: 16 }]
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, `${BULAN[bulan]} ${tahun}`)
-    XLSX.writeFile(wb, `Laporan_KantinDinda_${BULAN[bulan]}_${tahun}.xlsx`)
+    XLSX.writeFile(wb, `Laporan_${sanitizedName}_${BULAN[bulan]}_${tahun}.xlsx`)
     setStatus({ type: 'success', msg: 'File Excel berhasil didownload!' })
   }
 
@@ -97,10 +99,10 @@ export default function ExportLaporan() {
     // Header
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
-    doc.text('LAPORAN KEUANGAN KANTIN DINDA', 105, 18, { align: 'center' })
+    doc.text(`LAPORAN KEUANGAN ${businessName.toUpperCase()}`, 105, 18, { align: 'center' })
     doc.setFontSize(11)
     doc.setFont('helvetica', 'normal')
-    doc.text(`Gedung Ventura | Periode: ${BULAN[bulan]} ${tahun}`, 105, 26, { align: 'center' })
+    doc.text(`Periode: ${BULAN[bulan]} ${tahun}`, 105, 26, { align: 'center' })
 
     // Ringkasan
     doc.setFontSize(10)
@@ -152,7 +154,8 @@ export default function ExportLaporan() {
       doc.text(`Dicetak: ${new Date().toLocaleDateString('id-ID')} | Hal ${i} dari ${pageCount}`, 105, 290, { align: 'center' })
     }
 
-    doc.save(`Laporan_KantinDinda_${BULAN[bulan]}_${tahun}.pdf`)
+    const sanitizedName = businessName.replace(/[^a-zA-Z0-9_-]/g, '_')
+    doc.save(`Laporan_${sanitizedName}_${BULAN[bulan]}_${tahun}.pdf`)
     setStatus({ type: 'success', msg: 'File PDF berhasil didownload!' })
   }
 
@@ -166,7 +169,7 @@ export default function ExportLaporan() {
           <ArrowLeft size={18} /> Kembali
         </button>
         <h1 className="text-white text-2xl font-bold">Export Laporan</h1>
-        <p className="text-green-100 text-sm mt-1">Download rekap keuangan</p>
+        <p className="text-green-100 text-sm mt-1">Download rekap keuangan {businessName}</p>
       </div>
 
       <div className="px-4 -mt-4 flex flex-col gap-4 pb-8">

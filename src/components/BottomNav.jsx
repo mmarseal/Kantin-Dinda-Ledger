@@ -17,14 +17,19 @@ export default function BottomNav() {
             key={to}
             to={to}
             className={({ isActive }) =>
-              `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors
-              ${isActive
-                ? 'text-green-600'
-                : 'text-gray-400 hover:text-gray-600'}`
+              `flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-colors ${
+                isActive
+                  ? 'text-green-600'
+                  : 'text-gray-400 hover:text-gray-600'
+              }`
             }
           >
-            <Icon size={22} strokeWidth={isActive => isActive ? 2.5 : 1.8} />
-            <span className="text-xs font-medium">{label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+                <span className="text-xs font-medium">{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import { formatRupiah } from "../utils/formatCurrency";
+import { formatLocalDate, getPastDaysArray, parseLocalDate } from "../utils/dateUtils";
 import {
   TrendingUp,
   TrendingDown,
@@ -26,6 +27,7 @@ const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 export default function Dashboard() {
   const navigate = useNavigate();
   const { business } = useAuth();
+  const businessName = business?.name || "KasFlow";
   const [refreshToken, setRefreshToken] = useState(0);
   const [queryResult, setQueryResult] = useState({ key: null, todayData: null, weeklyData: [], error: null });
 
@@ -43,12 +45,8 @@ export default function Dashboard() {
     if (!businessId) return undefined;
 
     let active = true;
-    const todayDate = new Date().toISOString().split("T")[0];
-    const days = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return d.toISOString().split("T")[0];
-    });
+    const todayDate = formatLocalDate();
+    const days = getPastDaysArray(7);
 
     async function loadData() {
       try {
@@ -75,7 +73,7 @@ export default function Dashboard() {
         };
         const weeklyData = days.map((date) => {
           const dayTx = rows.filter((t) => t.transaction_date === date);
-          const d = new Date(date);
+          const d = parseLocalDate(date);
           return {
             hari: HARI[d.getDay()],
             Pemasukan: dayTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
@@ -107,8 +105,8 @@ export default function Dashboard() {
       <div className="bg-green-600 px-4 pt-10 pb-6 flex justify-between items-start md:hidden">
         <div>
           <p className="text-green-100 text-sm">{today}</p>
-          <h1 className="text-white text-2xl font-bold mt-1">Kantin Dinda</h1>
-          <p className="text-green-100 text-sm mt-0.5">Gedung Ventura</p>
+          <h1 className="text-white text-2xl font-bold mt-1">{businessName}</h1>
+          <p className="text-green-100 text-sm mt-0.5">Ringkasan Keuangan</p>
         </div>
         <button
           onClick={() => navigate("/export")}
@@ -121,7 +119,7 @@ export default function Dashboard() {
       <div className="hidden md:flex items-center justify-between mb-2 pt-2">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-500 text-sm">Ringkasan keuangan hari ini</p>
+          <p className="text-gray-500 text-sm">Ringkasan keuangan {businessName}</p>
         </div>
         <button
           onClick={() => navigate("/export")}

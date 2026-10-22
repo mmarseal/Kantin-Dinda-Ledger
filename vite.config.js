@@ -36,20 +36,11 @@ export default defineConfig({
         ]
       },
       workbox: {
-        // Cache semua asset utama
+        // Cache semua asset statis utama
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        // Strategi: cache dulu, fallback ke network
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'supabase-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
-              networkTimeoutSeconds: 10,
-            }
-          }
-        ]
+        // Hindari runtime caching pada endpoint Supabase (Auth & Database REST)
+        // untuk menjamin kesegaran data finansial real-time dan mencegah kebocoran sesi/token.
+        runtimeCaching: []
       }
     })
   ],
