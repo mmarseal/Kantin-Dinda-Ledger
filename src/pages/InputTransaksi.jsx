@@ -28,7 +28,8 @@ export default function InputTransaksi() {
     setStatus(null);
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(addAnother = false) {
+    if (loading) return;
     if (!["income", "expense"].includes(form.type)) return setStatus({ type: "error", msg: "Pilih jenis transaksi dulu." });
     if (!form.amount || !Number.isFinite(Number(form.amount)) || Number(form.amount) <= 0) return setStatus({ type: "error", msg: "Nominal harus lebih dari 0." });
     if (form.type === "expense" && !form.category) return setStatus({ type: "error", msg: "Pilih kategori pengeluaran." });
@@ -56,8 +57,13 @@ export default function InputTransaksi() {
       setLoading(false);
       return;
     } else {
-      setStatus({ type: "success", msg: "Transaksi berhasil disimpan!" });
-      setForm(getDefaultForm());
+      if (addAnother) {
+        setStatus({ type: "success", msg: "Transaksi berhasil disimpan. Form siap untuk transaksi berikutnya." });
+        setForm((prev) => ({ ...prev, amount: "", transaction_date: formatJakartaDate() }));
+      } else {
+        setStatus({ type: "success", msg: "Transaksi berhasil disimpan!" });
+        setForm(getDefaultForm());
+      }
     }
     setLoading(false);
   }
@@ -91,7 +97,10 @@ export default function InputTransaksi() {
             <div className="sm:col-span-2"><label className={labelClass} htmlFor="transaction-note">Keterangan <span className="font-normal text-[var(--kf-text-subtle)]">(opsional)</span></label><textarea id="transaction-note" name="note" value={form.note} onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))} placeholder={form.type === "income" ? "Contoh: pendapatan penjualan siang" : "Contoh: beli bahan baku"} rows={3} className="w-full resize-y rounded-[var(--kf-radius-md)] border border-[var(--kf-border-strong)] px-4 py-3 text-base outline-none focus:border-[var(--kf-accent)]" /></div>
           </div>
           {status && <div role={status.type === "error" ? "alert" : "status"} className={`mt-4 flex items-center gap-3 rounded-xl border p-3 text-sm font-medium ${status.type === "success" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-700"}`}>{status.type === "success" ? <CheckCircle size={20} /> : <AlertCircle size={20} />}{status.msg}</div>}
-          <button type="button" onClick={handleSubmit} disabled={loading} className={`mt-5 min-h-12 w-full rounded-[var(--kf-radius-md)] px-4 text-base font-bold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${form.type === "income" ? "bg-[var(--kf-accent)] hover:bg-[var(--kf-accent-hover)]" : "bg-rose-600 hover:bg-rose-700"}`}>{loading ? "Menyimpan..." : transaction ? "Simpan Perubahan" : `Simpan ${form.type === "income" ? "Pemasukan" : "Pengeluaran"}`}</button>
+          <div className="mt-5 grid gap-2">
+            <button type="button" onClick={() => handleSubmit()} disabled={loading} className={`min-h-12 w-full rounded-[var(--kf-radius-md)] px-4 text-base font-bold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60 ${form.type === "income" ? "bg-[var(--kf-accent)] hover:bg-[var(--kf-accent-hover)]" : "bg-rose-600 hover:bg-rose-700"}`}>{loading ? "Menyimpan..." : transaction ? "Simpan Perubahan" : `Simpan ${form.type === "income" ? "Pemasukan" : "Pengeluaran"}`}</button>
+            {!transaction && <button type="button" onClick={() => handleSubmit(true)} disabled={loading} className="min-h-12 w-full rounded-[var(--kf-radius-md)] border border-[var(--kf-border-strong)] bg-white px-4 text-base font-semibold text-[var(--kf-text)] transition hover:bg-[var(--kf-surface-soft)] disabled:cursor-not-allowed disabled:opacity-60">Simpan &amp; Catat Lagi</button>}
+          </div>
         </section>
 
         <aside className="hidden space-y-4 lg:block">
