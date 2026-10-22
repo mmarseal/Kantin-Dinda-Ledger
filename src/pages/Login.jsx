@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../context/useAuth'
 import { Eye, EyeOff, AlertCircle } from 'lucide-react'
 
 export default function Login() {

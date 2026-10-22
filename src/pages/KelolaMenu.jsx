@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import {
   ArrowLeft,
   Plus,
@@ -14,25 +14,41 @@ import {
 export default function KelolaMenu() {
   const navigate = useNavigate();
   const { business } = useAuth();
-  const [menus, setMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [queryResult, setQueryResult] = useState({ key: null, menus: [], error: null });
   const [newName, setNewName] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  async function fetchMenus() {
-    setLoading(true);
-    const { data } = await supabase
-      .from("menus")
-      .select("*")
-      .order("created_at", { ascending: true });
-    if (data) setMenus(data);
-    setLoading(false);
-  }
+  const businessId = business?.id ?? null;
+  const queryKey = JSON.stringify([businessId, refreshToken]);
+  const currentResult = businessId && queryResult.key === queryKey ? queryResult : null;
+  const menus = currentResult?.menus ?? [];
+  const queryError = currentResult?.error ?? null;
+  const loading = Boolean(businessId) && !currentResult;
 
   useEffect(() => {
-    fetchMenus();
-  }, []);
+    if (!businessId) return undefined;
+
+    let active = true;
+    async function loadMenus() {
+      try {
+        const { data, error } = await supabase
+          .from("menus")
+          .select("*")
+          .eq("business_id", businessId)
+          .order("created_at", { ascending: true });
+
+        if (!active) return;
+        setQueryResult({ key: queryKey, menus: error ? [] : (data || []), error: error?.message ?? null });
+      } catch (error) {
+        if (active) setQueryResult({ key: queryKey, menus: [], error: error.message || "Gagal memuat menu." });
+      }
+    }
+
+    loadMenus();
+    return () => { active = false };
+  }, [businessId, queryKey]);
 
   async function handleTambah() {
     setError("");
@@ -51,26 +67,55 @@ export default function KelolaMenu() {
     });
     if (!error) {
       setNewName("");
-      fetchMenus();
+      setRefreshToken((token) => token + 1);
     } else setError("Gagal menyimpan. Coba lagi.");
     setSaving(false);
   }
 
   async function toggleAktif(menu) {
-    await supabase
-      .from("menus")
-      .update({ is_active: !menu.is_active })
-      .eq("id", menu.id);
-    setMenus((prev) =>
-      prev.map((m) =>
-        m.id === menu.id ? { ...m, is_active: !m.is_active } : m,
-      ),
-    );
+    if (!business?.id) return;
+    setError("");
+    try {
+      const { error: updateError } = await supabase
+        .from("menus")
+        .update({ is_active: !menu.is_active })
+        .eq("id", menu.id)
+        .eq("business_id", business.id);
+      if (updateError) {
+        setError("Gagal memperbarui status menu. Coba lagi.");
+        return;
+      }
+    } catch {
+      setError("Gagal memperbarui status menu. Coba lagi.");
+      return;
+    }
+    setQueryResult((prev) => prev.key === queryKey ? {
+      ...prev,
+      menus: prev.menus.map((m) => m.id === menu.id ? { ...m, is_active: !m.is_active } : m),
+    } : prev);
   }
 
   async function handleHapus(id) {
-    await supabase.from("menus").delete().eq("id", id);
-    setMenus((prev) => prev.filter((m) => m.id !== id));
+    if (!business?.id) return;
+    setError("");
+    try {
+      const { error: deleteError } = await supabase
+        .from("menus")
+        .delete()
+        .eq("id", id)
+        .eq("business_id", business.id);
+      if (deleteError) {
+        setError("Gagal menghapus menu. Coba lagi.");
+        return;
+      }
+    } catch {
+      setError("Gagal menghapus menu. Coba lagi.");
+      return;
+    }
+    setQueryResult((prev) => prev.key === queryKey ? {
+      ...prev,
+      menus: prev.menus.filter((m) => m.id !== id),
+    } : prev);
   }
 
   return (
@@ -131,6 +176,12 @@ export default function KelolaMenu() {
               </span>
             </p>
           </div>
+
+          {queryError && (
+            <div role="alert" className="p-4 text-sm text-red-600">
+              Gagal memuat menu. Coba muat ulang halaman.
+            </div>
+          )}
 
           {loading ? (
             <div className="p-4 flex flex-col gap-3">

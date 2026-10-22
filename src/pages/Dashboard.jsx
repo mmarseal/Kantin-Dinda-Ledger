@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/useAuth";
 import { formatRupiah } from "../utils/formatCurrency";
 import {
   TrendingUp,
@@ -24,9 +25,9 @@ const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [todayData, setTodayData] = useState({ income: 0, expense: 0, cash: 0, qris: 0 });
-  const [weeklyData, setWeeklyData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { business } = useAuth();
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [queryResult, setQueryResult] = useState({ key: null, todayData: null, weeklyData: [], error: null });
 
   const today = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -35,63 +36,68 @@ export default function Dashboard() {
     year: "numeric",
   });
 
-  async function fetchData() {
-    setLoading(true);
-    const todayISO = new Date().toISOString().split("T")[0];
+  const businessId = business?.id ?? null;
+  const queryKey = JSON.stringify([businessId, refreshToken]);
+
+  useEffect(() => {
+    if (!businessId) return undefined;
+
+    let active = true;
+    const todayDate = new Date().toISOString().split("T")[0];
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       return d.toISOString().split("T")[0];
     });
-    const startDate = days[0];
 
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("type, amount, transaction_date, payment_method")
-      .gte("transaction_date", startDate)
-      .lte("transaction_date", todayISO);
+    async function loadData() {
+      try {
+        const { data, error } = await supabase
+          .from("transactions")
+          .select("type, amount, transaction_date, payment_method")
+          .eq("business_id", businessId)
+          .gte("transaction_date", days[0])
+          .lte("transaction_date", todayDate);
 
-    if (error) {
-      console.error(error);
-      setLoading(false);
-      return;
+        if (!active) return;
+        if (error) {
+          setQueryResult({ key: queryKey, todayData: null, weeklyData: [], error: error.message });
+          return;
+        }
+
+        const rows = data || [];
+        const todayTx = rows.filter((t) => t.transaction_date === todayDate);
+        const todayData = {
+          income: todayTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
+          expense: todayTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0),
+          cash: todayTx.filter((t) => t.type === "income" && t.payment_method === "cash").reduce((s, t) => s + Number(t.amount), 0),
+          qris: todayTx.filter((t) => t.type === "income" && t.payment_method === "qris").reduce((s, t) => s + Number(t.amount), 0),
+        };
+        const weeklyData = days.map((date) => {
+          const dayTx = rows.filter((t) => t.transaction_date === date);
+          const d = new Date(date);
+          return {
+            hari: HARI[d.getDay()],
+            Pemasukan: dayTx.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0),
+            Pengeluaran: dayTx.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0),
+          };
+        });
+        setQueryResult({ key: queryKey, todayData, weeklyData, error: null });
+      } catch (error) {
+        if (active) setQueryResult({ key: queryKey, todayData: null, weeklyData: [], error: error.message || "Gagal memuat ringkasan." });
+      }
     }
 
-    const todayTx = data.filter((t) => t.transaction_date === todayISO);
-    const income = todayTx
-      .filter((t) => t.type === "income")
-      .reduce((s, t) => s + Number(t.amount), 0);
-    const expense = todayTx
-      .filter((t) => t.type === "expense")
-      .reduce((s, t) => s + Number(t.amount), 0);
-    const cash = todayTx
-      .filter((t) => t.type === "income" && t.payment_method === "cash")
-      .reduce((s, t) => s + Number(t.amount), 0);
-    const qris = todayTx
-      .filter((t) => t.type === "income" && t.payment_method === "qris")
-      .reduce((s, t) => s + Number(t.amount), 0);
-    setTodayData({ income, expense, cash, qris });
+    loadData();
+    return () => { active = false };
+  }, [businessId, queryKey]);
 
-    const weekly = days.map((date) => {
-      const dayTx = data.filter((t) => t.transaction_date === date);
-      const d = new Date(date);
-      return {
-        hari: HARI[d.getDay()],
-        Pemasukan: dayTx
-          .filter((t) => t.type === "income")
-          .reduce((s, t) => s + Number(t.amount), 0),
-        Pengeluaran: dayTx
-          .filter((t) => t.type === "expense")
-          .reduce((s, t) => s + Number(t.amount), 0),
-      };
-    });
-    setWeeklyData(weekly);
-    setLoading(false);
-  }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const currentResult = businessId && queryResult.key === queryKey ? queryResult : null;
+  const todayData = currentResult?.todayData ?? { income: 0, expense: 0, cash: 0, qris: 0 };
+  const weeklyData = currentResult?.weeklyData ?? [];
+  const queryError = currentResult?.error ?? null;
+  const loading = Boolean(businessId) && !currentResult;
+  const fetchData = () => setRefreshToken((token) => token + 1);
 
   const labaHariIni = todayData.income - todayData.expense;
 
@@ -216,6 +222,11 @@ export default function Dashboard() {
               <RefreshCw size={16} />
             </button>
           </div>
+          {queryError && (
+            <p role="alert" className="mb-3 text-sm text-red-600">
+              Gagal memuat data transaksi. Coba muat ulang.
+            </p>
+          )}
           {loading ? (
             <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
               Memuat data...

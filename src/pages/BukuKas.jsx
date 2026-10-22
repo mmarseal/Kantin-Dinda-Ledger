@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/useAuth";
 import { formatRupiah } from "../utils/formatCurrency";
 import { useTransactions } from "../hooks/useTransactions";
 import {
@@ -36,14 +37,32 @@ function formatTanggalGrup(dateStr) {
 }
 
 export default function BukuKas() {
+  const { business } = useAuth();
   const [filter, setFilter] = useState("today");
-  const [deleteId, setDeleteId] = useState(null);
-  const { transactions, loading, summary, refetch } = useTransactions(filter);
+  const [deleteSelection, setDeleteSelection] = useState({ businessId: null, id: null });
+  const [deleteError, setDeleteError] = useState("");
+  const { transactions, loading, summary, error, refetch } = useTransactions(filter);
+  const deleteId = business?.id && deleteSelection.businessId === business.id ? deleteSelection.id : null;
 
   async function handleDelete(id) {
-    await supabase.from("transactions").delete().eq("id", id);
+    if (!business?.id) return;
+    setDeleteError("");
+    try {
+      const { error } = await supabase
+        .from("transactions")
+        .delete()
+        .eq("id", id)
+        .eq("business_id", business.id);
+      if (error) {
+        setDeleteError("Gagal menghapus transaksi. Coba lagi.");
+        return;
+      }
+    } catch {
+      setDeleteError("Gagal menghapus transaksi. Coba lagi.");
+      return;
+    }
     refetch();
-    setDeleteId(null);
+    setDeleteSelection({ businessId: business.id, id: null });
   }
 
   const grouped = groupByDate(transactions);
@@ -146,6 +165,16 @@ export default function BukuKas() {
         })()}
 
         {/* List Transaksi */}
+        {deleteError && (
+          <div role="alert" className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 text-sm">
+            {deleteError}
+          </div>
+        )}
+        {error && (
+          <div role="alert" className="bg-red-50 border border-red-200 text-red-600 rounded-xl p-3 text-sm">
+            Gagal memuat transaksi. Coba ubah filter atau muat ulang halaman.
+          </div>
+        )}
         {loading ? (
           <div className="flex flex-col gap-2">
             {[1, 2, 3].map((i) => (
@@ -226,7 +255,7 @@ export default function BukuKas() {
                           Hapus
                         </button>
                         <button
-                          onClick={() => setDeleteId(null)}
+                          onClick={() => setDeleteSelection({ businessId: business?.id ?? null, id: null })}
                           className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-lg font-medium"
                         >
                           Batal
@@ -234,7 +263,7 @@ export default function BukuKas() {
                       </div>
                     ) : (
                       <button
-                        onClick={() => setDeleteId(tx.id)}
+                        onClick={() => setDeleteSelection({ businessId: business?.id ?? null, id: tx.id })}
                         className="p-1.5 text-gray-300 hover:text-red-400 transition-colors shrink-0"
                       >
                         <Trash2 size={16} />

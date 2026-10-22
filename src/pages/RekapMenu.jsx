@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/useAuth";
 import {
   Settings,
   Plus,
@@ -28,44 +28,66 @@ export default function RekapMenu() {
   const navigate = useNavigate();
   const { business } = useAuth();
   const [filter, setFilter] = useState("today");
-  const [menus, setMenus] = useState([]); // master menu
-  const [sales, setSales] = useState([]); // rekap penjualan
-  const [qty, setQty] = useState({}); // { menu_id: number }
+  const [refreshToken, setRefreshToken] = useState(0);
+  const [queryResult, setQueryResult] = useState({ key: null, menus: [], sales: [], error: null });
+  const [qtyState, setQtyState] = useState({ businessId: null, values: {} }); // { menu_name: number }
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  async function fetchAll() {
-    setLoading(true);
-    const { start, end } = getDateRange(filter);
-
-    const [{ data: menuData }, { data: salesData }] = await Promise.all([
-      supabase
-        .from("menus")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at"),
-      supabase
-        .from("menu_sales")
-        .select("*")
-        .gte("sale_date", start)
-        .lte("sale_date", end),
-    ]);
-
-    if (menuData) setMenus(menuData);
-    if (salesData) setSales(salesData);
-    setLoading(false);
-  }
+  const businessId = business?.id ?? null;
+  const queryKey = JSON.stringify([businessId, filter, refreshToken]);
+  const currentResult = businessId && queryResult.key === queryKey ? queryResult : null;
+  const menus = currentResult?.menus ?? [];
+  const sales = currentResult?.sales ?? [];
+  const queryError = currentResult?.error ?? null;
+  const loading = Boolean(businessId) && !currentResult;
+  const qty = businessId && qtyState.businessId === businessId ? qtyState.values : {};
 
   useEffect(() => {
-    fetchAll();
-  }, [filter]);
+    if (!businessId) return undefined;
+
+    let active = true;
+    const { start, end } = getDateRange(filter);
+
+    async function loadData() {
+      try {
+        const [menuResult, salesResult] = await Promise.all([
+          supabase
+            .from("menus")
+            .select("*")
+            .eq("business_id", businessId)
+            .eq("is_active", true)
+            .order("created_at"),
+          supabase
+            .from("menu_sales")
+            .select("*")
+            .eq("business_id", businessId)
+            .gte("sale_date", start)
+            .lte("sale_date", end),
+        ]);
+
+        if (!active) return;
+        const error = menuResult.error || salesResult.error;
+        setQueryResult({
+          key: queryKey,
+          menus: error ? [] : (menuResult.data || []),
+          sales: error ? [] : (salesResult.data || []),
+          error: error?.message ?? null,
+        });
+      } catch (error) {
+        if (active) setQueryResult({ key: queryKey, menus: [], sales: [], error: error.message || "Gagal memuat rekap menu." });
+      }
+    }
+
+    loadData();
+    return () => { active = false };
+  }, [businessId, filter, queryKey]);
 
   function changeQty(menuName, delta) {
-    setQty((prev) => {
-      const current = prev[menuName] || 0;
+    setQtyState((prev) => {
+      const currentValues = prev.businessId === businessId ? prev.values : {};
+      const current = currentValues[menuName] || 0;
       const next = Math.max(0, current + delta);
-      return { ...prev, [menuName]: next };
+      return { businessId, values: { ...currentValues, [menuName]: next } };
     });
   }
 
@@ -97,8 +119,8 @@ export default function RekapMenu() {
         type: "success",
         msg: `${entries.length} menu berhasil dicatat!`,
       });
-      setQty({});
-      fetchAll();
+      setQtyState({ businessId, values: {} });
+      setRefreshToken((token) => token + 1);
     } else {
       setStatus({ type: "error", msg: "Gagal menyimpan. Coba lagi." });
     }
@@ -244,6 +266,13 @@ export default function RekapMenu() {
               <AlertCircle size={20} />
             )}
             <span className="text-sm font-medium">{status.msg}</span>
+          </div>
+        )}
+
+        {queryError && (
+          <div role="alert" className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600">
+            <AlertCircle size={20} />
+            <span className="text-sm font-medium">Gagal memuat rekap menu. Coba muat ulang halaman.</span>
           </div>
         )}
 

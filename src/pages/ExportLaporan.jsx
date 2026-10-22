@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../context/useAuth'
 import { formatRupiah } from '../utils/formatCurrency'
 import { ArrowLeft, FileSpreadsheet, FileText, Download, AlertCircle, CheckCircle } from 'lucide-react'
 import * as XLSX from 'xlsx'
@@ -14,36 +15,52 @@ const BULAN = [
 
 export default function ExportLaporan() {
   const navigate = useNavigate()
+  const { business } = useAuth()
   const now = new Date()
   const [bulan, setBulan] = useState(now.getMonth())
   const [tahun, setTahun] = useState(now.getFullYear())
-  const [data, setData] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [queryResult, setQueryResult] = useState({ key: null, data: [], error: null })
   const [status, setStatus] = useState(null)
+
+  const businessId = business?.id ?? null
+  const queryKey = JSON.stringify([businessId, bulan, tahun])
+  const currentResult = businessId && queryResult.key === queryKey ? queryResult : null
+  const data = currentResult?.data ?? []
+  const queryError = currentResult?.error ?? null
+  const loading = Boolean(businessId) && !currentResult
 
   const totalIncome  = data.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = data.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
   const laba = totalIncome - totalExpense
 
-  async function fetchData() {
-    setLoading(true)
-    setStatus(null)
+  useEffect(() => {
+    if (!businessId) return undefined
+
+    let active = true
     const start = `${tahun}-${String(bulan + 1).padStart(2, '0')}-01`
     const lastDay = new Date(tahun, bulan + 1, 0).getDate()
     const end = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${lastDay}`
 
-    const { data: rows, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .gte('transaction_date', start)
-      .lte('transaction_date', end)
-      .order('transaction_date', { ascending: true })
+    async function loadData() {
+      try {
+        const { data: rows, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('business_id', businessId)
+          .gte('transaction_date', start)
+          .lte('transaction_date', end)
+          .order('transaction_date', { ascending: true })
 
-    if (!error) setData(rows || [])
-    setLoading(false)
-  }
+        if (!active) return
+        setQueryResult({ key: queryKey, data: error ? [] : (rows || []), error: error?.message ?? null })
+      } catch (error) {
+        if (active) setQueryResult({ key: queryKey, data: [], error: error.message || 'Gagal memuat laporan.' })
+      }
+    }
 
-  useEffect(() => { fetchData() }, [bulan, tahun])
+    loadData()
+    return () => { active = false }
+  }, [businessId, bulan, tahun, queryKey])
 
   // ── Export Excel ──
   function exportExcel() {
@@ -214,6 +231,12 @@ export default function ExportLaporan() {
         </div>
 
         {/* Status */}
+        {queryError && (
+          <div role="alert" className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600">
+            <AlertCircle size={20} />
+            <span className="text-sm font-medium">Gagal memuat laporan. Coba ubah periode atau muat ulang halaman.</span>
+          </div>
+        )}
         {status && (
           <div className={`flex items-center gap-3 p-4 rounded-xl ${
             status.type === 'success'
