@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { BookOpen, ChefHat, LayoutDashboard, LogOut, PlusCircle, Store, UtensilsCrossed } from "lucide-react";
+import { BookOpen, ChefHat, LayoutDashboard, LogOut, PlusCircle, Store, UtensilsCrossed, Download, Settings as SettingsIcon } from "lucide-react";
 import BottomNav from "./BottomNav";
 import InstallPrompt from "./InstallPrompt";
 
@@ -10,6 +10,8 @@ const navItems = [
   { to: "/riwayat", icon: BookOpen, label: "Riwayat" },
   { to: "/rekap", icon: ChefHat, label: "Rekap" },
   { to: "/kelola-menu", icon: UtensilsCrossed, label: "Kelola Menu", group: "Usaha" },
+  { to: "/export", icon: Download, label: "Export Laporan" },
+  { to: "/settings", icon: SettingsIcon, label: "Pengaturan" },
 ];
 
 function Sidebar({ businessName }) {

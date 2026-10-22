@@ -98,8 +98,20 @@ export function AuthProvider({ children }) {
     setBusiness(null)
   }
 
+  async function updateBusinessName(name) {
+    if (!business?.id) return { error: new Error('Data usaha belum tersedia.') }
+    const { data, error } = await supabase
+      .from('businesses')
+      .update({ name })
+      .eq('id', business.id)
+      .select('id, name')
+      .single()
+    if (!error) setBusiness(data)
+    return { error }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, business, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, business, loading, signIn, signUp, signOut, updateBusinessName }}>
       {children}
     </AuthContext.Provider>
   )

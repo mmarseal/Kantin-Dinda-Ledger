@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/useAuth'
 import { formatRupiah } from '../utils/formatCurrency'
-import { ArrowLeft, FileSpreadsheet, FileText, Download, AlertCircle, CheckCircle } from 'lucide-react'
+import { FileSpreadsheet, FileText, Download, AlertCircle, CheckCircle, CalendarDays } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -14,7 +13,6 @@ const BULAN = [
 ]
 
 export default function ExportLaporan() {
-  const navigate = useNavigate()
   const { business } = useAuth()
   const businessName = business?.name || 'KasFlow'
   const now = new Date()
@@ -32,7 +30,7 @@ export default function ExportLaporan() {
 
   const totalIncome  = data.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0)
   const totalExpense = data.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0)
-  const laba = totalIncome - totalExpense
+  const selisihBersih = totalIncome - totalExpense
 
   useEffect(() => {
     if (!businessId) return undefined
@@ -79,7 +77,7 @@ export default function ExportLaporan() {
     rows.push({})
     rows.push({ 'Tanggal': 'TOTAL PEMASUKAN',  'Nominal (Rp)': totalIncome })
     rows.push({ 'Tanggal': 'TOTAL PENGELUARAN', 'Nominal (Rp)': totalExpense })
-    rows.push({ 'Tanggal': 'LABA BERSIH',       'Nominal (Rp)': laba })
+    rows.push({ 'Tanggal': 'SELISIH BERSIH',    'Nominal (Rp)': selisihBersih })
 
     const ws = XLSX.utils.json_to_sheet(rows)
     const sanitizedName = businessName.replace(/[^a-zA-Z0-9_-]/g, '_')
@@ -114,7 +112,7 @@ export default function ExportLaporan() {
       body: [
         ['Total Pemasukan', formatRupiah(totalIncome)],
         ['Total Pengeluaran', formatRupiah(totalExpense)],
-        ['Laba Bersih', formatRupiah(laba)],
+        ['Selisih Bersih', formatRupiah(selisihBersih)],
       ],
       styles: { fontSize: 9 },
       headStyles: { fillColor: [22, 163, 74] },
@@ -159,31 +157,28 @@ export default function ExportLaporan() {
     setStatus({ type: 'success', msg: 'File PDF berhasil didownload!' })
   }
 
-  const tahunOptions = [now.getFullYear() - 1, now.getFullYear()]
+  const tahunOptions = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1]
 
   return (
-    <div className="flex flex-col min-h-full">
+    <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5">
       {/* Header */}
-      <div className="bg-green-600 px-4 pt-10 pb-6 md:hidden">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-green-100 mb-3">
-          <ArrowLeft size={18} /> Kembali
-        </button>
-        <h1 className="text-white text-2xl font-bold">Export Laporan</h1>
-        <p className="text-green-100 text-sm mt-1">Download rekap keuangan {businessName}</p>
+      <div className="px-1 pt-1">
+        <h1 className="text-2xl font-bold tracking-tight text-[var(--kf-text)] sm:text-3xl">Export Laporan</h1>
+        <p className="mt-1 text-sm text-[var(--kf-text-muted)]">Unduh laporan keuangan {businessName}</p>
       </div>
 
-      <div className="px-4 -mt-4 flex flex-col gap-4 pb-8">
+      <div className="flex flex-col gap-5 pb-4">
 
         {/* Pilih Periode */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm font-semibold text-gray-700 mb-3">Pilih Periode</p>
+        <div className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-[var(--kf-text)]"><CalendarDays size={18} className="text-[var(--kf-accent)]" />Periode Laporan</p>
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs text-gray-500 mb-1 block">Bulan</label>
               <select
                 value={bulan}
                 onChange={e => setBulan(Number(e.target.value))}
-                className="w-full px-3 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400"
+                className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--kf-accent-soft)]"
               >
                 {BULAN.map((b, i) => <option key={i} value={i}>{b}</option>)}
               </select>
@@ -193,7 +188,7 @@ export default function ExportLaporan() {
               <select
                 value={tahun}
                 onChange={e => setTahun(Number(e.target.value))}
-                className="w-full px-3 py-3 border-2 border-gray-200 rounded-xl text-sm focus:outline-none focus:border-green-400"
+                className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--kf-accent-soft)]"
               >
                 {tahunOptions.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
@@ -202,8 +197,8 @@ export default function ExportLaporan() {
         </div>
 
         {/* Ringkasan Preview */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <p className="text-sm font-semibold text-gray-700 mb-3">
+        <div className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
+          <p className="mb-3 text-sm font-semibold text-[var(--kf-text)]">
             Ringkasan {BULAN[bulan]} {tahun}
           </p>
           {loading ? (
@@ -221,9 +216,9 @@ export default function ExportLaporan() {
                 <span className="text-sm font-bold text-red-500">{formatRupiah(totalExpense)}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-sm font-semibold text-gray-700">Laba Bersih</span>
-                <span className={`text-sm font-bold ${laba >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                  {formatRupiah(laba)}
+                <span className="text-sm font-semibold text-[var(--kf-text)]">Selisih Bersih</span>
+                <span className={`text-sm font-bold ${selisihBersih >= 0 ? 'text-[var(--kf-accent)]' : 'text-red-600'}`}>
+                  {formatRupiah(selisihBersih)}
                 </span>
               </div>
               <div className="mt-1 pt-2 border-t border-gray-100">
@@ -254,35 +249,21 @@ export default function ExportLaporan() {
         {/* Tombol Export */}
         <p className="text-sm font-semibold text-gray-700 -mb-2">Pilih Format</p>
 
-        <button
-          onClick={exportExcel}
-          disabled={loading}
-          className="w-full py-4 px-5 rounded-2xl bg-emerald-600 text-white font-bold flex items-center gap-3 shadow-lg shadow-emerald-100 disabled:opacity-50"
-        >
-          <div className="bg-white/20 p-2 rounded-lg">
+        <div className="grid gap-4 md:grid-cols-2">
+        <div className="flex flex-col items-start gap-4 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-5 shadow-[var(--kf-shadow-sm)]">
+          <div className="flex items-center gap-3"><div className="rounded-xl bg-[var(--kf-accent-soft)] p-2.5 text-[var(--kf-accent)]">
             <FileSpreadsheet size={22} />
-          </div>
-          <div className="text-left">
-            <p className="font-bold">Download Excel</p>
-            <p className="text-emerald-100 text-xs font-normal">Format .xlsx — buka di Excel / Google Sheets</p>
-          </div>
-          <Download size={18} className="ml-auto" />
-        </button>
+          </div><div><p className="font-semibold text-[var(--kf-text)]">Excel</p><p className="text-sm text-[var(--kf-text-muted)]">Data transaksi dalam format .xlsx</p></div></div>
+          <button onClick={exportExcel} disabled={loading} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--kf-radius-sm)] bg-[var(--kf-accent)] px-4 text-sm font-semibold text-white hover:bg-[var(--kf-accent-hover)] disabled:opacity-50">Download Excel <Download size={17} /></button>
+        </div>
 
-        <button
-          onClick={exportPDF}
-          disabled={loading}
-          className="w-full py-4 px-5 rounded-2xl bg-red-500 text-white font-bold flex items-center gap-3 shadow-lg shadow-red-100 disabled:opacity-50"
-        >
-          <div className="bg-white/20 p-2 rounded-lg">
+        <div className="flex flex-col items-start gap-4 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-5 shadow-[var(--kf-shadow-sm)]">
+          <div className="flex items-center gap-3"><div className="rounded-xl bg-red-50 p-2.5 text-red-700">
             <FileText size={22} />
-          </div>
-          <div className="text-left">
-            <p className="font-bold">Download PDF</p>
-            <p className="text-red-100 text-xs font-normal">Format .pdf — untuk arsip & cetak</p>
-          </div>
-          <Download size={18} className="ml-auto" />
-        </button>
+          </div><div><p className="font-semibold text-[var(--kf-text)]">PDF</p><p className="text-sm text-[var(--kf-text-muted)]">Laporan siap dicetak dalam format .pdf</p></div></div>
+          <button onClick={exportPDF} disabled={loading} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-4 text-sm font-semibold text-[var(--kf-text)] hover:bg-[var(--kf-surface-soft)] disabled:opacity-50">Download PDF <Download size={17} /></button>
+        </div>
+        </div>
 
       </div>
     </div>

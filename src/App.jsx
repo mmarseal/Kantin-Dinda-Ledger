@@ -9,6 +9,7 @@ import BukuKas from './pages/BukuKas'
 import RekapMenu from './pages/RekapMenu'
 import KelolaMenu from './pages/KelolaMenu'
 import ExportLaporan from './pages/ExportLaporan'
+import Settings from './pages/Settings'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
@@ -39,6 +40,7 @@ function AppRoutes() {
         <Route path="rekap" element={<RekapMenu />} />
         <Route path="kelola-menu" element={<KelolaMenu />} />
         <Route path="export" element={<ExportLaporan />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
