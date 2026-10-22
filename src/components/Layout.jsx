@@ -68,7 +68,7 @@ function Sidebar({ businessName }) {
 
 function MobileHeader({ businessName, namaUser, onLogout }) {
   return (
-    <header className="shell-glass shell-mobile-header sticky top-0 z-40 flex min-h-[4.5rem] items-center justify-between gap-3 border-x-0 border-t-0 px-4 py-2 md:hidden">
+    <header className="shell-glass shell-mobile-header sticky top-0 z-40 flex min-h-[4.5rem] flex-wrap items-center justify-between gap-2 border-x-0 border-t-0 px-4 py-2 md:hidden">
       <div className="flex min-w-0 items-center gap-3">
         <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] bg-white">
           <img src="/icon-192.png" alt="KasFlow" className="h-full w-full object-cover" />
@@ -89,6 +89,12 @@ function MobileHeader({ businessName, namaUser, onLogout }) {
           Keluar
         </button>
       </div>
+      <NavLink
+        to="/settings"
+        className={({ isActive }) => `flex min-h-11 w-full items-center gap-2 rounded-[var(--kf-radius-sm)] px-3 text-sm font-semibold transition-colors ${isActive ? "bg-[var(--kf-accent-soft)] text-[var(--kf-accent-hover)]" : "text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)] hover:text-[var(--kf-text)]"}`}
+      >
+        {({ isActive }) => <><SettingsIcon size={18} strokeWidth={isActive ? 2.3 : 1.9} aria-hidden="true" /><span>Pengaturan</span></>}
+      </NavLink>
     </header>
   );
 }
