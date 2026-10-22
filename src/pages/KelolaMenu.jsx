@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
-import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Utensils } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, AlertCircle, Utensils, Pencil, X } from "lucide-react";
 
 export default function KelolaMenu() {
   const { business } = useAuth();
   const [refreshToken, setRefreshToken] = useState(0);
   const [queryResult, setQueryResult] = useState({ key: null, menus: [], error: null });
   const [newName, setNewName] = useState("");
+  const [editingMenu, setEditingMenu] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editSaving, setEditSaving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -86,6 +89,51 @@ export default function KelolaMenu() {
     } : prev);
   }
 
+  function openEdit(menu) {
+    setError("");
+    setEditingMenu(menu);
+    setEditName(menu.name);
+  }
+
+  function closeEdit() {
+    if (editSaving) return;
+    setEditingMenu(null);
+    setEditName("");
+  }
+
+  async function handleEdit(event) {
+    event.preventDefault();
+    const trimmedName = editName.trim();
+    if (!trimmedName) return setError("Nama menu tidak boleh kosong.");
+    const duplicate = menus.find((menu) => menu.id !== editingMenu?.id && menu.name.toLowerCase() === trimmedName.toLowerCase());
+    if (duplicate) return setError("Menu sudah ada di daftar.");
+    if (!business?.id || !editingMenu?.id) return setError("Data bisnis atau menu tidak ditemukan. Harap muat ulang.");
+
+    setEditSaving(true);
+    setError("");
+    try {
+      const { error: updateError } = await supabase
+        .from("menus")
+        .update({ name: trimmedName })
+        .eq("id", editingMenu.id)
+        .eq("business_id", business.id);
+      if (updateError) {
+        setError("Gagal memperbarui menu. Coba lagi.");
+        return;
+      }
+      setQueryResult((prev) => prev.key === queryKey ? {
+        ...prev,
+        menus: prev.menus.map((menu) => menu.id === editingMenu.id ? { ...menu, name: trimmedName } : menu),
+      } : prev);
+      setEditingMenu(null);
+      setEditName("");
+    } catch {
+      setError("Gagal memperbarui menu. Coba lagi.");
+    } finally {
+      setEditSaving(false);
+    }
+  }
+
   async function handleHapus(id) {
     if (!business?.id) return;
     setError("");
@@ -135,6 +183,7 @@ export default function KelolaMenu() {
               <p className={`break-words text-base font-semibold ${menu.is_active ? "text-[var(--kf-text)]" : "text-[var(--kf-text-muted)]"}`}>{menu.name}</p>
               <span className={`w-fit rounded-full px-3 py-1 text-sm font-semibold ${menu.is_active ? "bg-[var(--kf-accent-soft)] text-[var(--kf-accent-hover)]" : "bg-gray-100 text-gray-600"}`}>{menu.is_active ? "Aktif" : "Nonaktif"}</span>
               <div className="flex items-center justify-end gap-2">
+                <button type="button" aria-label={`Edit ${menu.name}`} onClick={() => openEdit(menu)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--kf-radius-sm)] text-[var(--kf-accent-hover)] hover:bg-[var(--kf-accent-soft)]"><Pencil size={18} /></button>
                 <button type="button" aria-label={`${menu.is_active ? "Nonaktifkan" : "Aktifkan"} ${menu.name}`} aria-pressed={menu.is_active} onClick={() => toggleAktif(menu)} className={`inline-flex min-h-11 items-center gap-2 rounded-[var(--kf-radius-sm)] border px-3 text-sm font-semibold transition ${menu.is_active ? "border-[var(--kf-border)] text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)]" : "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100"}`}>{menu.is_active ? <ToggleRight size={21} /> : <ToggleLeft size={21} />}{menu.is_active ? "Nonaktifkan" : "Aktifkan"}</button>
                 <button type="button" aria-label={`Hapus ${menu.name}`} onClick={() => handleHapus(menu.id)} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-[var(--kf-radius-sm)] text-rose-700 hover:bg-rose-50"><Trash2 size={18} /></button>
               </div>
@@ -142,6 +191,12 @@ export default function KelolaMenu() {
           </ul>
         </>}
       </section>
+      {editingMenu && <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) closeEdit(); }}>
+        <section role="dialog" aria-modal="true" aria-labelledby="edit-menu-title" className="w-full max-w-md rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-5 shadow-2xl sm:p-6">
+          <div className="mb-4 flex items-start justify-between gap-3"><div><h2 id="edit-menu-title" className="text-lg font-bold text-[var(--kf-text)]">Edit Menu</h2><p className="mt-1 text-sm text-[var(--kf-text-muted)]">Perbarui nama menu.</p></div><button type="button" aria-label="Tutup" onClick={closeEdit} disabled={editSaving} className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-[var(--kf-radius-sm)] text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)] disabled:opacity-50"><X size={18} /></button></div>
+          <form onSubmit={handleEdit} className="flex flex-col gap-4"><label htmlFor="edit-menu-name" className="text-sm font-medium text-[var(--kf-text-muted)]">Nama Menu</label><input id="edit-menu-name" autoFocus value={editName} onChange={(event) => { setEditName(event.target.value); setError(""); }} maxLength={120} disabled={editSaving} className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] px-4 text-base text-[var(--kf-text)] outline-none focus:border-[var(--kf-accent)] disabled:bg-[var(--kf-surface-soft)]" />{error && <p role="alert" className="text-sm font-medium text-rose-700">{error}</p>}<div className="flex justify-end gap-2"><button type="button" onClick={closeEdit} disabled={editSaving} className="min-h-11 rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] px-4 text-sm font-semibold text-[var(--kf-text-muted)] disabled:opacity-50">Batal</button><button type="submit" disabled={editSaving || !editName.trim()} className="min-h-11 rounded-[var(--kf-radius-sm)] bg-[var(--kf-accent)] px-4 text-sm font-semibold text-white hover:bg-[var(--kf-accent-hover)] disabled:opacity-50">{editSaving ? "Menyimpan…" : "Simpan"}</button></div></form>
+        </section>
+      </div>}
     </div>
   );
 }
