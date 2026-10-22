@@ -30,7 +30,7 @@
   --kf-radius-xl: 1.375rem;
   --kf-shadow-sm: 0 1px 2px rgb(25 47 40 / 5%);
   --kf-shadow-md: 0 12px 32px rgb(25 47 40 / 7%);
-  --kf-shell-sidebar: 16.5rem;
+  --kf-shell-sidebar: 15rem;
   --kf-space-page: clamp(1rem, 2vw, 2rem);
 }
 
@@ -93,7 +93,7 @@ a:focus-visible {
 .shell-content {
   width: min(100%, 88rem);
   margin-inline: auto;
-  padding: 1.5rem var(--kf-space-page) calc(6rem + env(safe-area-inset-bottom));
+  padding: 1.25rem var(--kf-space-page) calc(6rem + env(safe-area-inset-bottom));
 }
 
 .shell-mobile-header {
@@ -117,7 +117,7 @@ a:focus-visible {
 
 @media (min-width: 768px) and (max-width: 1023px) {
   :root {
-    --kf-shell-sidebar: 14.5rem;
+    --kf-shell-sidebar: 13.5rem;
   }
 }
 

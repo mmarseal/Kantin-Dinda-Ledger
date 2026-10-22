@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import {
@@ -24,7 +25,11 @@ const getDefaultForm = () => ({
 
 export default function InputTransaksi() {
   const { business } = useAuth();
-  const [form, setForm] = useState(getDefaultForm);
+  const location = useLocation();
+  const [form, setForm] = useState(() => ({
+    ...getDefaultForm(),
+    type: ["income", "expense"].includes(location.state?.type) ? location.state.type : "",
+  }));
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // 'success' | 'error'
 
