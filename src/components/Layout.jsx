@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
-import { LayoutDashboard, PlusCircle, BookOpen, ChefHat, UtensilsCrossed } from "lucide-react";
+import { BookOpen, ChefHat, LayoutDashboard, LogOut, PlusCircle, Store, UtensilsCrossed } from "lucide-react";
 import BottomNav from "./BottomNav";
 import InstallPrompt from "./InstallPrompt";
 
@@ -9,81 +9,91 @@ const navItems = [
   { to: "/catat", icon: PlusCircle, label: "Catat" },
   { to: "/riwayat", icon: BookOpen, label: "Riwayat" },
   { to: "/rekap", icon: ChefHat, label: "Rekap" },
-  { to: "/kelola-menu", icon: UtensilsCrossed, label: "Kelola Menu" },
+  { to: "/kelola-menu", icon: UtensilsCrossed, label: "Kelola Menu", group: "Usaha" },
 ];
 
 function Sidebar({ businessName }) {
   return (
-    <aside className="hidden md:flex flex-col w-64 min-h-screen bg-white border-r border-gray-100 fixed left-0 top-0 z-40">
-      <div className="px-6 py-6 border-b border-gray-100">
+    <aside className="shell-sidebar fixed inset-y-0 left-0 z-40 hidden flex-col border-r md:flex">
+      <div className="border-b border-[var(--kf-border)] px-5 py-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0">
-            <img
-              src="/icon-192.png"
-              alt={businessName}
-              className="w-full h-full object-cover"
-            />
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-white">
+            <img src="/icon-192.png" alt="KasFlow" className="h-full w-full object-cover" />
           </div>
-          <div>
-            <p className="font-bold text-gray-800 leading-tight">
-              {businessName}
-            </p>
-            <p className="text-xs text-gray-400">Sistem Keuangan</p>
+          <div className="min-w-0">
+            <p className="text-lg font-bold leading-tight tracking-tight text-[var(--kf-text)]">KasFlow</p>
+            <p className="mt-0.5 text-sm text-[var(--kf-text-muted)]">Keuangan usaha</p>
+          </div>
+        </div>
+        <div className="mt-5 flex items-start gap-3 rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-[var(--kf-surface-soft)] px-3.5 py-3">
+          <Store size={18} className="mt-0.5 shrink-0 text-[var(--kf-accent)]" aria-hidden="true" />
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-[var(--kf-text-subtle)]">Usaha aktif</p>
+            <p className="truncate text-sm font-semibold text-[var(--kf-text)]">{businessName}</p>
           </div>
         </div>
       </div>
-      <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium ${
-                isActive
-                  ? "bg-green-50 text-green-600"
-                  : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
-                {label}
-              </>
-            )}
-          </NavLink>
-        ))}
+
+      <nav aria-label="Navigasi utama" className="flex-1 px-3 py-5">
+        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--kf-text-subtle)]">Menu utama</p>
+        <div className="flex flex-col gap-1">
+          {navItems.map(({ to, icon: Icon, label, group }) => (
+            <div key={to}>
+              {group && <p className="mb-2 mt-5 border-t border-[var(--kf-border)] px-3 pt-4 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--kf-text-subtle)]">{group}</p>}
+              <NavLink
+                to={to}
+                className={({ isActive }) => `group flex min-h-12 items-center gap-3 rounded-[var(--kf-radius-md)] border-l-[3px] px-3.5 text-[15px] font-medium transition-colors focus-visible:outline-offset-2 ${isActive ? "border-[var(--kf-accent)] bg-[var(--kf-accent-soft)] text-[var(--kf-accent-hover)]" : "border-transparent text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)] hover:text-[var(--kf-text)]"}`}
+              >
+                {({ isActive }) => (
+                  <>
+                    <Icon size={20} strokeWidth={isActive ? 2.3 : 1.9} aria-hidden="true" />
+                    <span>{label}</span>
+                  </>
+                )}
+              </NavLink>
+            </div>
+          ))}
+        </div>
       </nav>
-      <div className="px-6 py-4 border-t border-gray-100">
-        <p className="text-xs text-gray-400">Sistem Informasi</p>
-        <p className="text-xs text-gray-400">Manajemen Keuangan</p>
-        <p className="text-xs text-gray-300 mt-1">v1.0.0 · KP 2026</p>
+
+      <div className="border-t border-[var(--kf-border)] px-5 py-4">
+        <p className="text-sm font-medium text-[var(--kf-text-muted)]">KasFlow</p>
+        <p className="mt-0.5 text-xs text-[var(--kf-text-subtle)]">Pencatatan keuangan usaha</p>
       </div>
     </aside>
   );
 }
 
-function MobileHeader({ namaUser, onLogout }) {
+function MobileHeader({ businessName, namaUser, onLogout }) {
   return (
-    <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-40">
-      <div className="flex items-center gap-2">
-        <div className="w-2 h-2 rounded-full bg-green-400"></div>
-        <p className="text-sm font-medium text-gray-700">{namaUser}</p>
+    <header className="shell-glass shell-mobile-header sticky top-0 z-40 flex min-h-[4.5rem] items-center justify-between gap-3 border-x-0 border-t-0 px-4 py-2 md:hidden">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] bg-white">
+          <img src="/icon-192.png" alt="KasFlow" className="h-full w-full object-cover" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-base font-bold leading-tight tracking-tight text-[var(--kf-text)]">KasFlow</p>
+          <p className="truncate text-sm text-[var(--kf-text-muted)]">{businessName}</p>
+        </div>
       </div>
-      <button
-        onClick={onLogout}
-        className="text-xs text-gray-400 hover:text-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors"
-      >
-        Keluar
-      </button>
-    </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="hidden max-w-28 truncate text-sm text-[var(--kf-text-muted)] sm:block">{namaUser}</span>
+        <button
+          type="button"
+          onClick={onLogout}
+          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--kf-radius-sm)] px-3 text-sm font-semibold text-[var(--kf-text-muted)] transition-colors hover:bg-red-50 hover:text-[var(--kf-danger)]"
+        >
+          <LogOut size={17} aria-hidden="true" />
+          Keluar
+        </button>
+      </div>
+    </header>
   );
 }
 
 export default function Layout() {
   const { user, business, signOut } = useAuth();
   const navigate = useNavigate();
-
   const businessName = business?.name || "KasFlow";
   const namaUser = user?.user_metadata?.nama || user?.email || "Pengguna";
 
@@ -93,44 +103,38 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="app-shell">
       <InstallPrompt />
       <Sidebar businessName={businessName} />
 
-      <div className="md:ml-64">
-        {/* Desktop top bar */}
-        <div className="hidden md:flex items-center justify-between px-8 py-4 bg-white border-b border-gray-100 sticky top-0 z-30">
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleDateString("id-ID", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400"></div>
-              <p className="text-sm text-gray-500">{namaUser}</p>
-            </div>
+      <div className="shell-main">
+        <header className="shell-glass sticky top-0 z-30 hidden min-h-16 items-center justify-between gap-6 border-x-0 border-t-0 px-6 lg:px-8 md:flex">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[var(--kf-text)]">{businessName}</p>
+            <p className="text-sm text-[var(--kf-text-muted)]">
+              {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-3">
+            <span className="max-w-52 truncate text-sm text-[var(--kf-text-muted)]">{namaUser}</span>
             <button
+              type="button"
               onClick={handleLogout}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] bg-white px-3.5 text-sm font-semibold text-[var(--kf-text-muted)] transition-colors hover:border-red-200 hover:bg-red-50 hover:text-[var(--kf-danger)]"
             >
+              <LogOut size={17} aria-hidden="true" />
               Keluar
             </button>
           </div>
-        </div>
+        </header>
 
-        {/* Mobile header */}
-        <MobileHeader namaUser={namaUser} onLogout={handleLogout} />
+        <MobileHeader businessName={businessName} namaUser={namaUser} onLogout={handleLogout} />
 
-        <main className="pb-20 md:pb-0 md:p-6 max-w-5xl">
+        <main className="shell-content">
           <Outlet />
         </main>
       </div>
 
-      {/* hanya muncul di mobile */}
       <div className="md:hidden">
         <BottomNav />
       </div>
