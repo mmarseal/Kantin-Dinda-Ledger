@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import {
@@ -26,9 +26,12 @@ const getDefaultForm = () => ({
 export default function InputTransaksi() {
   const { business } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+  const transaction = location.state?.transaction ?? null;
   const [form, setForm] = useState(() => ({
     ...getDefaultForm(),
-    type: ["income", "expense"].includes(location.state?.type) ? location.state.type : "",
+    ...(transaction ? { ...transaction, amount: String(transaction.amount), category: transaction.category || "", payment_method: transaction.payment_method || "", note: transaction.note || "" } : {}),
+    type: transaction?.type || (["income", "expense"].includes(location.state?.type) ? location.state.type : ""),
   }));
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState(null); // 'success' | 'error'
@@ -44,12 +47,16 @@ export default function InputTransaksi() {
 
   async function handleSubmit() {
     // Validasi
-    if (!form.type)
+    if (!["income", "expense"].includes(form.type))
       return setStatus({ type: "error", msg: "Pilih jenis transaksi dulu." });
     if (!form.amount || Number(form.amount) <= 0)
       return setStatus({ type: "error", msg: "Nominal harus lebih dari 0." });
     if (form.type === "expense" && !form.category)
       return setStatus({ type: "error", msg: "Pilih kategori pengeluaran." });
+    const [year, month, day] = (form.transaction_date || "").split("-").map(Number);
+    const parsedDate = new Date(Date.UTC(year, month - 1, day));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.transaction_date || "") || parsedDate.getUTCFullYear() !== year || parsedDate.getUTCMonth() + 1 !== month || parsedDate.getUTCDate() !== day)
+      return setStatus({ type: "error", msg: "Tanggal transaksi tidak valid." });
     if (form.type === "income" && !form.payment_method)
       return setStatus({
         type: "error",
@@ -74,11 +81,18 @@ export default function InputTransaksi() {
       transaction_date: form.transaction_date,
     };
 
-    const { error } = await supabase.from("transactions").insert(payload);
+    const result = transaction?.id
+      ? await supabase.from("transactions").update(payload).eq("business_id", business.id).eq("id", transaction.id).select("id").maybeSingle()
+      : await supabase.from("transactions").insert(payload);
 
-    if (error) {
+    if (result.error || (transaction?.id && !result.data)) {
       setStatus({ type: "error", msg: "Gagal menyimpan. Coba lagi." });
     } else {
+      if (transaction?.id) {
+        navigate("/riwayat", { replace: true, state: { notice: "Transaksi berhasil diperbarui." } });
+        setLoading(false);
+        return;
+      }
       setStatus({ type: "success", msg: "Transaksi berhasil disimpan! ✓" });
       setForm(getDefaultForm());
     }
@@ -89,7 +103,7 @@ export default function InputTransaksi() {
     <div className="flex flex-col min-h-full">
       {/* Header */}
       <div className="bg-green-600 px-4 pt-10 pb-6 md:hidden">
-        <h1 className="text-white text-2xl font-bold">Catat Transaksi</h1>
+        <h1 className="text-white text-2xl font-bold">{transaction ? "Edit Transaksi" : "Catat Transaksi"}</h1>
         <p className="text-green-100 text-sm mt-1">
           Pilih jenis dan isi nominal
         </p>
