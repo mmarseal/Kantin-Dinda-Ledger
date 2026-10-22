@@ -45,9 +45,9 @@ export default function Login() {
       {/* Logo & Title */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg mb-4">
-          <img src="/icon-192.png" alt="Kantin Dinda" className="w-full h-full object-cover" />
+          <img src="/icon-192.png" alt="KasFlow" className="w-full h-full object-cover" />
         </div>
-        <h1 className="text-2xl font-bold text-gray-800">Kantin Dinda</h1>
+        <h1 className="text-2xl font-bold text-gray-800">KasFlow</h1>
         <p className="text-gray-500 text-sm mt-1">Sistem Manajemen Keuangan</p>
       </div>
 
