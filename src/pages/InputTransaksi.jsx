@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
-import { formatLocalDate } from "../utils/dateUtils";
+import { formatJakartaDate } from "../utils/dateUtils";
 import { formatRupiah } from "../utils/formatCurrency";
 import { AlertCircle, CheckCircle, Lightbulb, QrCode, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 
 const KATEGORI = ["Bahan Baku", "Operasional", "Tagihan", "Lain-lain"];
-const getDefaultForm = () => ({ type: "", amount: "", category: "", payment_method: "", note: "", transaction_date: formatLocalDate() });
+const getDefaultForm = () => ({ type: "", amount: "", category: "", payment_method: "", note: "", transaction_date: formatJakartaDate() });
 
 export default function InputTransaksi() {
   const { business } = useAuth();

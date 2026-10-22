@@ -53,7 +53,7 @@ export default function BukuKas() {
       {notice && <div role="status" className="rounded-[var(--kf-radius-md)] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">{notice}<button onClick={() => setNotice("")} className="ml-3 underline">Tutup</button></div>}
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label="Ringkasan transaksi">
-        {[{ label: "Pemasukan", value: summary.totalIncome, tone: "text-emerald-700" }, { label: "Pengeluaran", value: summary.totalExpense, tone: "text-rose-700" }, { label: "Selisih Bersih", value: summary.laba, tone: "text-teal-800" }].map((item) => <article key={item.label} className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-sm"><p className="text-sm font-medium text-[var(--kf-text-muted)]">{item.label}</p><p className={`mt-1 text-xl font-bold ${item.tone}`}>{formatRupiah(item.value)}</p></article>)}
+        {[{ label: "Pemasukan", value: summary.totalIncome, tone: "text-emerald-700" }, { label: "Pengeluaran", value: summary.totalExpense, tone: "text-rose-700" }, { label: "Selisih Bersih", value: summary.selisihBersih, tone: "text-teal-800" }].map((item) => <article key={item.label} className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-sm"><p className="text-sm font-medium text-[var(--kf-text-muted)]">{item.label}</p><p className={`mt-1 text-xl font-bold ${item.tone}`}>{formatRupiah(item.value)}</p></article>)}
       </section>
 
       <section className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-3 shadow-sm sm:p-4" aria-label="Filter transaksi">

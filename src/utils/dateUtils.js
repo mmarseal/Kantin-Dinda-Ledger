@@ -17,6 +17,29 @@ export function formatLocalDate(d = new Date()) {
   return `${year}-${month}-${day}`
 }
 
+export function getJakartaDateParts(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date)
+  return Object.fromEntries(parts.filter(({ type }) => type !== 'literal').map(({ type, value }) => [type, Number(value)]))
+}
+
+export function formatJakartaDate(date = new Date()) {
+  const { year, month, day } = getJakartaDateParts(date)
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+}
+
+export function getJakartaDateDaysAgo(days, baseDate = new Date()) {
+  const { year, month, day } = getJakartaDateParts(baseDate)
+  const shifted = new Date(year, month - 1, day - days)
+  return `${shifted.getFullYear()}-${String(shifted.getMonth() + 1).padStart(2, '0')}-${String(shifted.getDate()).padStart(2, '0')}`
+}
+
+export function getJakartaStartOfMonth(baseDate = new Date()) {
+  const { year, month } = getJakartaDateParts(baseDate)
+  return `${year}-${String(month).padStart(2, '0')}-01`
+}
+
 /**
  * Get a local calendar date string offset by a number of days.
  * @param {number} days - Number of days to subtract (positive for past, negative for future)

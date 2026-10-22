@@ -10,7 +10,7 @@ import {
   AlertCircle,
   CheckCircle,
 } from "lucide-react";
-import { formatLocalDate, getLocalDateDaysAgo } from "../utils/dateUtils";
+import { formatJakartaDate, getJakartaDateDaysAgo } from "../utils/dateUtils";
 
 const FILTER = [
   { label: "Hari Ini", value: "today" },
@@ -18,9 +18,9 @@ const FILTER = [
 ];
 
 function getDateRange(filter) {
-  const today = formatLocalDate();
+  const today = formatJakartaDate();
   if (filter === "today") return { start: today, end: today };
-  return { start: getLocalDateDaysAgo(6), end: today };
+  return { start: getJakartaDateDaysAgo(6), end: today };
 }
 
 export default function RekapMenu() {
@@ -102,7 +102,7 @@ export default function RekapMenu() {
 
     setSaving(true);
     setStatus(null);
-    const today = formatLocalDate();
+    const today = formatJakartaDate();
 
     const inserts = entries.map(([menu_name, quantity]) => ({
       business_id: business.id,

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/useAuth'
 import { formatRupiah } from '../utils/formatCurrency'
+import { getJakartaDateParts } from '../utils/dateUtils'
 import { FileSpreadsheet, FileText, Download, AlertCircle, CheckCircle, CalendarDays } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
@@ -15,9 +16,9 @@ const BULAN = [
 export default function ExportLaporan() {
   const { business } = useAuth()
   const businessName = business?.name || 'KasFlow'
-  const now = new Date()
-  const [bulan, setBulan] = useState(now.getMonth())
-  const [tahun, setTahun] = useState(now.getFullYear())
+  const now = getJakartaDateParts()
+  const [bulan, setBulan] = useState(now.month - 1)
+  const [tahun, setTahun] = useState(now.year)
   const [queryResult, setQueryResult] = useState({ key: null, data: [], error: null })
   const [status, setStatus] = useState(null)
 
@@ -149,7 +150,7 @@ export default function ExportLaporan() {
       doc.setFontSize(8)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(150)
-      doc.text(`Dicetak: ${new Date().toLocaleDateString('id-ID')} | Hal ${i} dari ${pageCount}`, 105, 290, { align: 'center' })
+      doc.text(`Dicetak: ${new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Jakarta' }).format(new Date())} | Hal ${i} dari ${pageCount}`, 105, 290, { align: 'center' })
     }
 
     const sanitizedName = businessName.replace(/[^a-zA-Z0-9_-]/g, '_')
@@ -157,7 +158,7 @@ export default function ExportLaporan() {
     setStatus({ type: 'success', msg: 'File PDF berhasil didownload!' })
   }
 
-  const tahunOptions = [now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1]
+  const tahunOptions = [now.year - 1, now.year, now.year + 1]
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5">

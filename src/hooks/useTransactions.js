@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/useAuth'
-import { formatLocalDate, getLocalDateDaysAgo, getStartOfMonth } from '../utils/dateUtils'
+import { formatJakartaDate, getJakartaDateDaysAgo, getJakartaStartOfMonth } from '../utils/dateUtils'
 
 function getDateRange(range) {
-  const today = formatLocalDate()
+  const today = formatJakartaDate()
 
   if (range === 'today') return { start: today, end: today }
 
   if (range === '7days' || range === 'week') {
-    return { start: getLocalDateDaysAgo(6), end: today }
+    return { start: getJakartaDateDaysAgo(6), end: today }
   }
 
   if (range === 'month') {
-    return { start: getStartOfMonth(), end: today }
+    return { start: getJakartaStartOfMonth(), end: today }
   }
 
   return { start: today, end: today }
@@ -72,7 +72,7 @@ export function useTransactions(range = 'today') {
   const summary = {
     totalIncome: transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0),
     totalExpense: transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0),
-    get laba() { return this.totalIncome - this.totalExpense }
+    get selisihBersih() { return this.totalIncome - this.totalExpense }
   }
 
   return {

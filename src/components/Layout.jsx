@@ -114,7 +114,7 @@ export default function Layout() {
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--kf-text)]">{businessName}</p>
             <p className="text-sm text-[var(--kf-text-muted)]">
-              {new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+              {new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-3">
