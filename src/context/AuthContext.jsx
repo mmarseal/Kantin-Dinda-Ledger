@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { AuthContext } from './authContext'
 
@@ -6,6 +6,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [business, setBusiness] = useState(null)
   const [loading, setLoading] = useState(true)
+  const pendingSignUpRef = useRef(null)
 
   // Fetch business milik user yang sedang login
   async function fetchBusiness(userId) {
@@ -30,6 +31,18 @@ export function AuthProvider({ children }) {
       console.error('Gagal memuat data bisnis:', err)
       setBusiness(null)
     }
+  }
+
+  function publishAuthSession(session) {
+    const currentUser = session?.user ?? null
+    setUser(currentUser)
+    setTimeout(async () => {
+      try {
+        await fetchBusiness(currentUser?.id)
+      } finally {
+        setLoading(false)
+      }
+    }, 0)
   }
 
   useEffect(() => {
@@ -57,7 +70,17 @@ export function AuthProvider({ children }) {
     // PENTING: callback TIDAK BOLEH await Supabase network call secara langsung,
     // karena menyebabkan deadlock pada internal auth lock SDK Supabase.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        const pendingSignUp = pendingSignUpRef.current
+        if (
+          event === 'SIGNED_IN' &&
+          pendingSignUp &&
+          session?.user?.email?.toLowerCase() === pendingSignUp.email
+        ) {
+          pendingSignUp.session = session
+          return
+        }
+
         const currentUser = session?.user ?? null
         setUser(currentUser)
 
@@ -85,12 +108,76 @@ export function AuthProvider({ children }) {
   }
 
   async function signUp(email, password, nama) {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { nama } }
-    })
-    return { error }
+    const { data: existingSessionData, error: existingSessionError } = await supabase.auth.getSession()
+    if (existingSessionError) return { error: existingSessionError, session: null, sessionCleanupError: null }
+    if (existingSessionData?.session) {
+      publishAuthSession(existingSessionData.session)
+      return {
+        error: new Error('Sesi aktif terdeteksi. Silakan gunakan sesi yang sedang masuk.'),
+        session: existingSessionData.session,
+        sessionCleanupError: null
+      }
+    }
+
+    const pendingSignUp = { email: email.trim().toLowerCase(), session: null }
+    pendingSignUpRef.current = pendingSignUp
+    let sessionToPublish = null
+    let clearedSignUpSessionToken = null
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { nama } }
+      })
+      if (error) return { error, session: null, sessionCleanupError: null }
+
+      const signUpSession = data?.session ?? null
+      if (!signUpSession) return { error: null, session: null, sessionCleanupError: null }
+
+      const { data: activeSessionData, error: activeSessionError } = await supabase.auth.getSession()
+      if (activeSessionError) {
+        sessionToPublish = pendingSignUp.session ?? signUpSession
+        return { error: null, session: sessionToPublish, sessionCleanupError: activeSessionError }
+      }
+
+      const activeSession = activeSessionData?.session ?? null
+      if (!activeSession) {
+        clearedSignUpSessionToken = signUpSession.access_token
+        return { error: null, session: null, sessionCleanupError: null }
+      }
+
+      if (activeSession.access_token !== signUpSession.access_token) {
+        sessionToPublish = activeSession
+        return {
+          error: null,
+          session: activeSession,
+          sessionCleanupError: new Error('The active session changed during registration and was left untouched.')
+        }
+      }
+
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' })
+      if (signOutError) {
+        const { data: remainingSessionData, error: remainingSessionError } = await supabase.auth.getSession()
+        sessionToPublish = remainingSessionError
+          ? activeSession
+          : remainingSessionData?.session ?? null
+        if (!sessionToPublish) clearedSignUpSessionToken = signUpSession.access_token
+        return { error: null, session: sessionToPublish, sessionCleanupError: signOutError }
+      }
+
+      clearedSignUpSessionToken = signUpSession.access_token
+      return { error: null, session: null, sessionCleanupError: null }
+    } finally {
+      if (pendingSignUpRef.current === pendingSignUp) pendingSignUpRef.current = null
+
+      const deferredSession = pendingSignUp.session
+      if (sessionToPublish) {
+        publishAuthSession(sessionToPublish)
+      } else if (deferredSession && deferredSession.access_token !== clearedSignUpSessionToken) {
+        publishAuthSession(deferredSession)
+      }
+    }
   }
 
   async function signOut() {
