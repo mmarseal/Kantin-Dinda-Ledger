@@ -18,14 +18,8 @@ function Sidebar({ businessName }) {
   return (
     <aside className="shell-sidebar fixed inset-y-0 left-0 z-40 hidden flex-col border-r md:flex">
       <div className="border-b border-[var(--kf-border)] px-5 py-6">
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-white">
-            <img src="/icon-192.png" alt="KasFlow" className="h-full w-full object-cover" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-lg font-bold leading-tight tracking-tight text-[var(--kf-text)]">KasFlow</p>
-            <p className="mt-0.5 text-sm text-[var(--kf-text-muted)]">Keuangan usaha</p>
-          </div>
+        <div className="flex items-center">
+          <img src="/assets/kasflow-logo-horizontal.png" alt="KasFlow — Keuangan usaha" className="h-10 w-auto max-w-full object-contain" />
         </div>
         <div className="mt-5 flex items-start gap-3 rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-[var(--kf-surface-soft)] px-3.5 py-3">
           <Store size={18} className="mt-0.5 shrink-0 text-[var(--kf-accent)]" aria-hidden="true" />
@@ -70,13 +64,8 @@ function MobileHeader({ businessName, namaUser, onLogout }) {
   return (
     <header className="shell-glass shell-mobile-header sticky top-0 z-40 flex min-h-[4.5rem] flex-wrap items-center justify-between gap-2 border-x-0 border-t-0 px-4 py-2 md:hidden">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] bg-white">
-          <img src="/icon-192.png" alt="KasFlow" className="h-full w-full object-cover" />
-        </div>
-        <div className="min-w-0">
-          <p className="text-base font-bold leading-tight tracking-tight text-[var(--kf-text)]">KasFlow</p>
-          <p className="truncate text-sm text-[var(--kf-text-muted)]">{businessName}</p>
-        </div>
+        <img src="/assets/kasflow-logo-horizontal.png" alt="KasFlow" className="h-8 w-auto max-w-40 object-contain" />
+        <p className="truncate text-sm text-[var(--kf-text-muted)]">{businessName}</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <span className="hidden max-w-28 truncate text-sm text-[var(--kf-text-muted)] sm:block">{namaUser}</span>

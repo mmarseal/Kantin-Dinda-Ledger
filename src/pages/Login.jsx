@@ -44,10 +44,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--kf-page)] px-4 py-8">
       {/* Logo & Title */}
       <div className="mb-8 flex flex-col items-center">
-        <div className="mb-4 h-20 w-20 overflow-hidden rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white shadow-[var(--kf-shadow-sm)]">
-          <img src="/icon-192.png" alt="KasFlow" className="w-full h-full object-cover" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[var(--kf-text)]">KasFlow</h1>
+        <img src="/assets/kasflow-logo-vertical.png" alt="KasFlow" className="mb-4 h-36 w-auto max-w-56 object-contain" />
         <p className="mt-1 text-sm text-[var(--kf-text-muted)]">Sistem Manajemen Keuangan</p>
       </div>
 
