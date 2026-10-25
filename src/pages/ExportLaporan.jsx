@@ -306,14 +306,14 @@ export default function ExportLaporan() {
   return (
     <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col gap-5">
       <header className="px-1 pt-1">
-        <p className="flex items-center gap-2 text-sm font-medium text-[var(--kf-text-muted)]">
-          <Store size={16} className="text-[var(--kf-accent)]" />
+        <p className="flex items-center gap-2 text-sm font-medium text-(--kf-text-muted)">
+          <Store size={16} className="text-(--kf-accent)" />
           {businessName}
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--kf-text)] sm:text-3xl">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-(--kf-text) sm:text-3xl">
           Export Laporan
         </h1>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-[var(--kf-text-muted)]">
+        <p className="mt-1 max-w-2xl text-sm leading-6 text-(--kf-text-muted)">
           Pilih periode untuk meninjau ringkasan, lalu unduh laporan dalam
           format PDF atau Excel.
         </p>
@@ -324,16 +324,16 @@ export default function ExportLaporan() {
           className="grid gap-4 md:grid-cols-[minmax(15rem,0.85fr)_minmax(0,1.15fr)]"
           aria-label="Periode dan ringkasan laporan"
         >
-          <div className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
-            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-[var(--kf-text)]">
-              <CalendarDays size={19} className="text-[var(--kf-accent)]" />
+          <div className="rounded-(--kf-radius-lg) border border-(--kf-border) bg-white p-4 shadow-(--kf-shadow-sm) sm:p-5">
+            <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-(--kf-text)">
+              <CalendarDays size={19} className="text-(--kf-accent)" />
               Periode Laporan
             </h2>
             <div className="grid grid-cols-2 gap-3">
               <div className="min-w-0">
                 <label
                   htmlFor="report-month"
-                  className="mb-1.5 block text-sm font-medium text-[var(--kf-text-muted)]"
+                  className="mb-1.5 block text-sm font-medium text-(--kf-text-muted)"
                 >
                   Bulan
                 </label>
@@ -341,7 +341,7 @@ export default function ExportLaporan() {
                   id="report-month"
                   value={bulan}
                   onChange={(e) => setBulan(Number(e.target.value))}
-                  className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-3 text-base text-[var(--kf-text)] focus:outline-none focus:ring-2 focus:ring-[var(--kf-accent-soft)]"
+                  className="min-h-12 w-full rounded-(--kf-radius-sm) border border-(--kf-border-strong) bg-white px-3 text-base text-(--kf-text) focus:outline-none focus:ring-2 focus:ring-(--kf-accent-soft)"
                 >
                   {BULAN.map((b, i) => (
                     <option key={i} value={i}>
@@ -353,7 +353,7 @@ export default function ExportLaporan() {
               <div className="min-w-0">
                 <label
                   htmlFor="report-year"
-                  className="mb-1.5 block text-sm font-medium text-[var(--kf-text-muted)]"
+                  className="mb-1.5 block text-sm font-medium text-(--kf-text-muted)"
                 >
                   Tahun
                 </label>
@@ -361,7 +361,7 @@ export default function ExportLaporan() {
                   id="report-year"
                   value={tahun}
                   onChange={(e) => setTahun(Number(e.target.value))}
-                  className="min-h-12 w-full rounded-[var(--kf-radius-sm)] border border-[var(--kf-border-strong)] bg-white px-3 text-base text-[var(--kf-text)] focus:outline-none focus:ring-2 focus:ring-[var(--kf-accent-soft)]"
+                  className="min-h-12 w-full rounded-(--kf-radius-sm) border border-(--kf-border-strong) bg-white px-3 text-base text-(--kf-text) focus:outline-none focus:ring-2 focus:ring-(--kf-accent-soft)"
                 >
                   {tahunOptions.map((y) => (
                     <option key={y} value={y}>
@@ -373,12 +373,12 @@ export default function ExportLaporan() {
             </div>
           </div>
 
-          <div className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
+          <div className="rounded-(--kf-radius-lg) border border-(--kf-border) bg-white p-4 shadow-(--kf-shadow-sm) sm:p-5">
             <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-              <h2 className="text-base font-semibold text-[var(--kf-text)]">
+              <h2 className="text-base font-semibold text-(--kf-text)">
                 Ringkasan
               </h2>
-              <span className="text-sm text-[var(--kf-text-muted)]">
+              <span className="text-sm text-(--kf-text-muted)">
                 {BULAN[bulan]} {tahun}
               </span>
             </div>
@@ -396,16 +396,16 @@ export default function ExportLaporan() {
               </div>
             ) : (
               <div>
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--kf-border)] py-2.5">
-                  <span className="text-sm text-[var(--kf-text-muted)]">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-(--kf-border) py-2.5">
+                  <span className="text-sm text-(--kf-text-muted)">
                     Total Pemasukan
                   </span>
                   <span className="text-right text-sm font-semibold tabular-nums text-emerald-700">
                     {formatRupiah(totalIncome)}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-[var(--kf-border)] py-2.5">
-                  <span className="text-sm text-[var(--kf-text-muted)]">
+                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-(--kf-border) py-2.5">
+                  <span className="text-sm text-(--kf-text-muted)">
                     Total Pengeluaran
                   </span>
                   <span className="text-right text-sm font-semibold tabular-nums text-rose-700">
@@ -413,16 +413,16 @@ export default function ExportLaporan() {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-2.5">
-                  <span className="text-sm font-semibold text-[var(--kf-text)]">
+                  <span className="text-sm font-semibold text-(--kf-text)">
                     Selisih Bersih
                   </span>
                   <span
-                    className={`text-right text-base font-bold tabular-nums ${selisihBersih >= 0 ? "text-[var(--kf-accent)]" : "text-rose-700"}`}
+                    className={`text-right text-base font-bold tabular-nums ${selisihBersih >= 0 ? "text-(--kf-accent)" : "text-rose-700"}`}
                   >
                     {formatRupiah(selisihBersih)}
                   </span>
                 </div>
-                <p className="mt-2 border-t border-[var(--kf-border)] pt-2 text-xs text-[var(--kf-text-subtle)]">
+                <p className="mt-2 border-t border-(--kf-border) pt-2 text-xs text-(--kf-text-subtle)">
                   {data.length} transaksi tercatat
                 </p>
               </div>
@@ -464,23 +464,23 @@ export default function ExportLaporan() {
           <div className="mb-3">
             <h2
               id="export-format-heading"
-              className="text-base font-semibold text-[var(--kf-text)]"
+              className="text-base font-semibold text-(--kf-text)"
             >
               Unduh Laporan
             </h2>
-            <p className="mt-0.5 text-sm text-[var(--kf-text-muted)]">
+            <p className="mt-0.5 text-sm text-(--kf-text-muted)">
               Pilih format yang sesuai dengan kebutuhan Anda.
             </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <article className="flex min-w-0 flex-col justify-between gap-5 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
+            <article className="flex min-w-0 flex-col justify-between gap-5 rounded-(--kf-radius-lg) border border-(--kf-border) bg-white p-4 shadow-(--kf-shadow-sm) sm:p-5">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="rounded-[var(--kf-radius-sm)] bg-[var(--kf-accent-soft)] p-2.5 text-[var(--kf-accent)]">
+                <div className="rounded-(--kf-radius-sm) bg-(--kf-accent-soft) p-2.5 text-(--kf-accent)">
                   <FileSpreadsheet size={22} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-[var(--kf-text)]">Excel</h3>
-                  <p className="mt-0.5 text-sm leading-5 text-[var(--kf-text-muted)]">
+                  <h3 className="font-semibold text-(--kf-text)">Excel</h3>
+                  <p className="mt-0.5 text-sm leading-5 text-(--kf-text-muted)">
                     Lembar kerja untuk mengolah dan meninjau data transaksi.
                   </p>
                 </div>
@@ -489,20 +489,20 @@ export default function ExportLaporan() {
                 type="button"
                 onClick={exportExcel}
                 disabled={loading}
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--kf-radius-md)] border border-[var(--kf-border-strong)] bg-white px-4 text-sm font-semibold text-[var(--kf-text)] transition-colors hover:bg-[var(--kf-surface-soft)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-(--kf-radius-md) border border-(--kf-border-strong) bg-white px-4 text-sm font-semibold text-(--kf-text) transition-colors hover:bg-(--kf-surface-soft) disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download size={17} aria-hidden="true" />
                 Download Excel
               </button>
             </article>
-            <article className="flex min-w-0 flex-col justify-between gap-5 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-sm)] sm:p-5">
+            <article className="flex min-w-0 flex-col justify-between gap-5 rounded-(--kf-radius-lg) border border-(--kf-border) bg-white p-4 shadow-(--kf-shadow-sm) sm:p-5">
               <div className="flex min-w-0 items-start gap-3">
-                <div className="rounded-[var(--kf-radius-sm)] bg-slate-100 p-2.5 text-slate-700">
+                <div className="rounded-(--kf-radius-sm) bg-slate-100 p-2.5 text-slate-700">
                   <FileText size={22} aria-hidden="true" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-[var(--kf-text)]">PDF</h3>
-                  <p className="mt-0.5 text-sm leading-5 text-[var(--kf-text-muted)]">
+                  <h3 className="font-semibold text-(--kf-text)">PDF</h3>
+                  <p className="mt-0.5 text-sm leading-5 text-(--kf-text-muted)">
                     Laporan rapi yang siap dibagikan atau dicetak.
                   </p>
                 </div>
@@ -511,7 +511,7 @@ export default function ExportLaporan() {
                 type="button"
                 onClick={exportPDF}
                 disabled={loading}
-                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--kf-radius-md)] bg-[var(--kf-accent)] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--kf-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-(--kf-radius-md) bg-(--kf-accent) px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-(--kf-accent-hover) disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download size={17} aria-hidden="true" />
                 Download PDF
