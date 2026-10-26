@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/useAuth";
 import { formatRupiah, formatTanggal } from "../utils/formatCurrency";
@@ -9,9 +9,8 @@ import {
   ArrowUpRight,
   Banknote,
   CalendarDays,
-  FileDown,
-  Plus,
   RefreshCw,
+  Sun,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -99,10 +98,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { business, user } = useAuth();
+  const { period } = useOutletContext();
   const businessId = business?.id ?? null;
-  const businessName = business?.name || "KasFlow";
   const userName = user?.user_metadata?.nama || user?.email?.split("@")[0] || "";
-  const [period, setPeriod] = useState("today");
+  const profileName = userName || "Pengguna";
   const [refreshToken, setRefreshToken] = useState(0);
   const [result, setResult] = useState({ key: null, transactions: [], recentTransactions: [], periodError: null, recentError: null });
   const now = new Date();
@@ -194,7 +193,6 @@ export default function Dashboard() {
   const recentTransactions = current?.recentTransactions ?? [];
   const refresh = () => setRefreshToken((token) => token + 1);
   const openInput = (type) => navigate("/catat", { state: { type, from: location.pathname } });
-
   const summaryCards = [
     { label: "Pemasukan", amount: income, icon: TrendingUp, color: "text-emerald-700", surface: "bg-emerald-50", iconTone: "text-emerald-700" },
     { label: "Pengeluaran", amount: expense, icon: TrendingDown, color: "text-rose-700", surface: "bg-rose-50", iconTone: "text-rose-700" },
@@ -203,57 +201,27 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-4 pb-4 md:gap-5">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium capitalize text-[var(--kf-text-muted)]">{todayLabel}</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--kf-text)] sm:text-3xl">
-            {greeting(currentHour)}{userName ? `, ${userName}` : ""} <span aria-hidden="true">👋</span>
-          </h1>
-          <p className="mt-1 max-w-2xl truncate text-base text-[var(--kf-text-muted)]">Ringkasan keuangan {businessName}</p>
-        </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0">
-          <button type="button" onClick={() => navigate("/export")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-white px-3 text-sm font-semibold text-[var(--kf-text)] shadow-sm transition hover:bg-[var(--kf-surface-soft)] sm:px-4">
-            <FileDown size={18} aria-hidden="true" /> Export Laporan
-          </button>
-          <button type="button" onClick={() => openInput("income")} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--kf-radius-md)] bg-[var(--kf-accent)] px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[var(--kf-accent-hover)] sm:px-4">
-            <Plus size={18} aria-hidden="true" /> Catat Transaksi
-          </button>
-        </div>
-      </header>
-
-      <section aria-label="Ringkasan keuangan" className="flex flex-col gap-2.5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-bold text-[var(--kf-text)]">Ringkasan keuangan</h2>
-            <p className="text-sm text-[var(--kf-text-muted)]">Pilih periode untuk melihat pergerakan transaksi.</p>
+      <section aria-label="Ringkasan dashboard" className="flex flex-col gap-4">
+        <div className="grid gap-3 py-2 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.7fr)] lg:items-center lg:gap-8">
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-[var(--kf-text)] sm:text-3xl">
+              {greeting(currentHour)}, {profileName} <span aria-hidden="true">👋</span>
+            </h1>
+            <p className="mt-1 text-sm leading-6 text-[var(--kf-text-muted)] sm:text-base">Berikut ringkasan keuangan usaha Anda {period === "today" ? "hari ini" : period === "7days" ? "dalam 7 hari terakhir" : "bulan ini"}.</p>
           </div>
-          <div role="group" aria-label="Periode ringkasan" className="grid grid-cols-3 rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-white p-1 shadow-sm">
-            {PERIODS.map(({ label, value }) => (
-              <button key={value} type="button" aria-pressed={period === value} onClick={() => setPeriod(value)} className={`min-h-11 rounded-[var(--kf-radius-sm)] px-2 text-xs font-semibold transition sm:px-4 sm:text-sm ${period === value ? "bg-[var(--kf-accent-soft)] text-[var(--kf-accent-hover)] shadow-sm" : "text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)]"}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {summaryCards.map(({ label, amount, icon: Icon, color, surface, iconTone }) => (
-            <article key={label} className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-3.5 shadow-sm sm:p-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-[var(--kf-text-muted)]">{label}</p>
-                  {loading ? <div className="mt-2 h-8 w-36 animate-pulse rounded-lg bg-[var(--kf-surface-soft)]" /> : <p className={`mt-1 break-all text-2xl font-bold tracking-tight ${color}`}>{formatRupiah(amount)}</p>}
-                </div>
-                <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--kf-radius-md)] ${surface}`}><Icon size={23} className={iconTone} aria-hidden="true" /></span>
-              </div>
-              <p className="mt-2 text-xs text-[var(--kf-text-subtle)]">{PERIODS.find(({ value }) => value === period)?.label}</p>
-            </article>
-          ))}
+          <aside aria-label="Informasi hari ini" className="flex items-start gap-3 rounded-[var(--kf-radius-md)] border border-[var(--kf-border)] bg-white p-3 text-sm shadow-[var(--kf-shadow-card)] sm:p-4 lg:items-center">
+            <Sun size={21} className="mt-0.5 shrink-0 text-amber-600 lg:mt-0" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="font-semibold capitalize text-[var(--kf-text)]">{todayLabel}</p>
+              <p className="mt-0.5 leading-5 text-[var(--kf-text-muted)]">Semoga usaha Anda lancar hari ini.</p>
+            </div>
+          </aside>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,1fr)]">
-        <article className="min-w-0 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-sm">
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(20rem,1fr)]">
+        <article className="min-w-0 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-card)] md:col-start-1 md:row-start-2 xl:col-start-1 xl:row-start-2">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-[var(--kf-text)]">Arus Kas</h2>
@@ -272,10 +240,10 @@ export default function Dashboard() {
           ) : (
             <div className="h-52 w-full" role="img" aria-label="Grafik pemasukan dan pengeluaran tujuh hari terakhir">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barGap={3} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
+                <BarChart data={chartData} barGap={3} margin={{ top: 4, right: 4, left: 6, bottom: 0 }}>
                   <CartesianGrid vertical={false} stroke="#edf1ef" />
                   <XAxis dataKey="hari" tick={{ fontSize: 12, fill: "#77837f" }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 11, fill: "#77837f" }} axisLine={false} tickLine={false} tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(0)}jt` : value >= 1000 ? `${(value / 1000).toFixed(0)}rb` : value} width={45} />
+                  <YAxis tick={{ fontSize: 11, fill: "#77837f" }} axisLine={false} tickLine={false} tickFormatter={(value) => value >= 1000000 ? `${(value / 1000000).toFixed(0)}jt` : value >= 1000 ? `${(value / 1000).toFixed(0)}rb` : value} width={68} />
                   <Tooltip labelFormatter={(_, payload) => payload?.[0]?.payload?.date ? formatTanggal(payload[0].payload.date) : ""} formatter={(value, name) => [formatRupiah(value), name]} contentStyle={{ borderRadius: 12, border: "1px solid #e2e9e6", fontSize: 13, boxShadow: "0 8px 24px rgb(25 47 40 / 8%)" }} />
                   <Legend wrapperStyle={{ fontSize: 13, paddingTop: 8 }} />
                   <Bar dataKey="Pemasukan" fill="#0f8b70" radius={[5, 5, 0, 0]} maxBarSize={26} />
@@ -286,7 +254,31 @@ export default function Dashboard() {
           )}
         </article>
 
-        <article className="min-w-0 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-sm">
+        <section aria-label="Ringkasan keuangan" className="flex flex-col gap-2.5 md:col-start-1 md:row-start-1 xl:col-span-2 xl:row-start-1">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-[var(--kf-text)]">Ringkasan keuangan</h2>
+              <p className="text-sm text-[var(--kf-text-muted)]">Menampilkan {PERIODS.find(({ value }) => value === period)?.label.toLowerCase()}.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {summaryCards.map(({ label, amount, icon: Icon, color, surface, iconTone }) => (
+              <article key={label} className="rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-3.5 shadow-[var(--kf-shadow-card)] sm:p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-[var(--kf-text-muted)]">{label}</p>
+                    {loading ? <div className="mt-2 h-8 w-36 animate-pulse rounded-lg bg-[var(--kf-surface-soft)]" /> : <p className={`mt-1 break-all text-2xl font-bold tracking-tight ${color}`}>{formatRupiah(amount)}</p>}
+                  </div>
+                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-[var(--kf-radius-md)] ${surface}`}><Icon size={23} className={iconTone} aria-hidden="true" /></span>
+                </div>
+                <p className="mt-2 text-xs text-[var(--kf-text-subtle)]">{PERIODS.find(({ value }) => value === period)?.label}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <article className="min-w-0 rounded-[var(--kf-radius-lg)] border border-[var(--kf-border)] bg-white p-4 shadow-[var(--kf-shadow-card)] md:col-start-1 md:row-start-3 xl:col-start-2 xl:row-start-2">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-bold text-[var(--kf-text)]">Transaksi Terbaru</h2>
@@ -324,13 +316,13 @@ export default function Dashboard() {
             </ul>
           )}
         </article>
-      </section>
+      </div>
 
       <section aria-label="Aksi cepat" className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <button type="button" onClick={() => openInput("income")} className="flex min-h-14 items-center justify-between rounded-[var(--kf-radius-lg)] border border-emerald-200 bg-white px-4 text-left shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/50 sm:px-5">
+        <button type="button" onClick={() => openInput("income")} className="flex min-h-14 items-center justify-between rounded-[var(--kf-radius-lg)] border border-emerald-200 bg-white px-4 text-left shadow-[var(--kf-shadow-card)] transition hover:border-emerald-300 hover:bg-emerald-50/50 sm:px-5">
           <span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-700"><TrendingUp size={20} aria-hidden="true" /></span><span><span className="block font-semibold text-[var(--kf-text)]">+ Catat Pemasukan</span><span className="block text-xs text-[var(--kf-text-muted)]">Tambahkan pemasukan usaha</span></span></span><ArrowRight size={18} className="text-emerald-700" aria-hidden="true" />
         </button>
-        <button type="button" onClick={() => openInput("expense")} className="flex min-h-14 items-center justify-between rounded-[var(--kf-radius-lg)] border border-rose-200 bg-white px-4 text-left shadow-sm transition hover:border-rose-300 hover:bg-rose-50/50 sm:px-5">
+        <button type="button" onClick={() => openInput("expense")} className="flex min-h-14 items-center justify-between rounded-[var(--kf-radius-lg)] border border-rose-200 bg-white px-4 text-left shadow-[var(--kf-shadow-card)] transition hover:border-rose-300 hover:bg-rose-50/50 sm:px-5">
           <span className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-50 text-rose-700"><TrendingDown size={20} aria-hidden="true" /></span><span><span className="block font-semibold text-[var(--kf-text)]">− Catat Pengeluaran</span><span className="block text-xs text-[var(--kf-text-muted)]">Tambahkan pengeluaran usaha</span></span></span><ArrowRight size={18} className="text-rose-700" aria-hidden="true" />
         </button>
       </section>

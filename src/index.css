@@ -29,6 +29,7 @@
   --kf-radius-lg: 1.125rem;
   --kf-radius-xl: 1.375rem;
   --kf-shadow-sm: 0 1px 2px rgb(25 47 40 / 5%);
+  --kf-shadow-card: 0 2px 5px rgb(25 47 40 / 4%), 0 10px 24px rgb(25 47 40 / 6%);
   --kf-shadow-md: 0 12px 32px rgb(25 47 40 / 7%);
   --kf-shell-sidebar: 15rem;
   --kf-space-page: clamp(1rem, 2vw, 2rem);
@@ -85,9 +86,55 @@ a:focus-visible {
   -webkit-backdrop-filter: blur(10px);
 }
 
+@keyframes mobile-navigation-enter {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.mobile-navigation-backdrop {
+  background: rgb(15 23 42 / 24%);
+  opacity: 1;
+  transition: opacity 300ms ease-out;
+}
+
+.mobile-navigation-backdrop.is-entering {
+  animation: mobile-navigation-fade-in 300ms ease-out both;
+}
+
+.mobile-navigation-backdrop.is-closing {
+  opacity: 0;
+}
+
+@keyframes mobile-navigation-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-navigation-drawer {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.mobile-navigation-drawer.is-entering {
+  animation: mobile-navigation-enter 300ms ease-out both;
+}
+
+.mobile-navigation-drawer.is-closing {
+  transform: translateX(100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-navigation-backdrop,
+  .mobile-navigation-drawer {
+    animation: none;
+    transition: none;
+  }
+}
+
 .shell-main {
   min-height: 100vh;
   margin-left: var(--kf-shell-sidebar);
+  background: #f0f5fa;
 }
 
 .shell-content {

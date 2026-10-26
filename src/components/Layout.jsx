@@ -1,8 +1,10 @@
 import { Outlet, NavLink, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../context/useAuth";
-import { BookOpen, ChefHat, LayoutDashboard, LogOut, PlusCircle, Store, UtensilsCrossed, Download, Settings as SettingsIcon } from "lucide-react";
+import { BookOpen, ChefHat, LayoutDashboard, PlusCircle, Store, UtensilsCrossed, Download, Settings as SettingsIcon } from "lucide-react";
 import BottomNav from "./BottomNav";
 import InstallPrompt from "./InstallPrompt";
+import AppHeader from "./AppHeader";
 
 const navItems = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Beranda" },
@@ -13,6 +15,17 @@ const navItems = [
   { to: "/export", icon: Download, label: "Export Laporan" },
   { to: "/settings", icon: SettingsIcon, label: "Pengaturan" },
 ];
+
+const mobileNavigationLabels = {
+  "/dashboard": "Dashboard",
+  "/catat": "Catat Transaksi",
+  "/riwayat": "Riwayat Transaksi",
+  "/rekap": "Rekap Keuangan",
+  "/kelola-menu": "Kelola Menu",
+  "/export": "Export Laporan",
+  "/settings": "Pengaturan",
+};
+const mobileNavigationItems = navItems.map((item) => ({ ...item, label: mobileNavigationLabels[item.to] }));
 
 function Sidebar({ businessName }) {
   return (
@@ -60,39 +73,11 @@ function Sidebar({ businessName }) {
   );
 }
 
-function MobileHeader({ businessName, namaUser, onLogout }) {
-  return (
-    <header className="shell-glass shell-mobile-header sticky top-0 z-40 flex min-h-[4.5rem] flex-wrap items-center justify-between gap-2 border-x-0 border-t-0 px-4 py-2 md:hidden">
-      <div className="flex min-w-0 items-center gap-3">
-        <img src="/assets/kasflow-logo-horizontal.png" alt="KasFlow" className="h-8 w-auto max-w-40 object-contain" />
-        <p className="truncate text-sm text-[var(--kf-text-muted)]">{businessName}</p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
-        <span className="hidden max-w-28 truncate text-sm text-[var(--kf-text-muted)] sm:block">{namaUser}</span>
-        <button
-          type="button"
-          onClick={onLogout}
-          className="inline-flex min-h-11 items-center gap-2 rounded-[var(--kf-radius-sm)] px-3 text-sm font-semibold text-[var(--kf-text-muted)] transition-colors hover:bg-red-50 hover:text-[var(--kf-danger)]"
-        >
-          <LogOut size={17} aria-hidden="true" />
-          Keluar
-        </button>
-      </div>
-      <NavLink
-        to="/settings"
-        className={({ isActive }) => `flex min-h-11 w-full items-center gap-2 rounded-[var(--kf-radius-sm)] px-3 text-sm font-semibold transition-colors ${isActive ? "bg-[var(--kf-accent-soft)] text-[var(--kf-accent-hover)]" : "text-[var(--kf-text-muted)] hover:bg-[var(--kf-surface-soft)] hover:text-[var(--kf-text)]"}`}
-      >
-        {({ isActive }) => <><SettingsIcon size={18} strokeWidth={isActive ? 2.3 : 1.9} aria-hidden="true" /><span>Pengaturan</span></>}
-      </NavLink>
-    </header>
-  );
-}
-
 export default function Layout() {
   const { user, business, signOut } = useAuth();
   const navigate = useNavigate();
+  const [period, setPeriod] = useState("today");
   const businessName = business?.name || "KasFlow";
-  const namaUser = user?.user_metadata?.nama || user?.email || "Pengguna";
 
   async function handleLogout() {
     await signOut();
@@ -105,30 +90,10 @@ export default function Layout() {
       <Sidebar businessName={businessName} />
 
       <div className="shell-main">
-        <header className="shell-glass sticky top-0 z-30 hidden min-h-16 items-center justify-between gap-6 border-x-0 border-t-0 px-6 lg:px-8 md:flex">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--kf-text)]">{businessName}</p>
-            <p className="text-sm text-[var(--kf-text-muted)]">
-              {new Intl.DateTimeFormat("id-ID", { timeZone: "Asia/Jakarta", weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-3">
-            <span className="max-w-52 truncate text-sm text-[var(--kf-text-muted)]">{namaUser}</span>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex min-h-11 items-center gap-2 rounded-[var(--kf-radius-sm)] border border-[var(--kf-border)] bg-white px-3.5 text-sm font-semibold text-[var(--kf-text-muted)] transition-colors hover:border-red-200 hover:bg-red-50 hover:text-[var(--kf-danger)]"
-            >
-              <LogOut size={17} aria-hidden="true" />
-              Keluar
-            </button>
-          </div>
-        </header>
-
-        <MobileHeader businessName={businessName} namaUser={namaUser} onLogout={handleLogout} />
+        <AppHeader user={user} businessName={businessName} period={period} setPeriod={setPeriod} onLogout={handleLogout} navigationItems={mobileNavigationItems} />
 
         <main className="shell-content">
-          <Outlet />
+          <Outlet context={{ period, setPeriod }} />
         </main>
       </div>
 
